@@ -1354,8 +1354,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
   }
   if (LIVE && session && !profile) setTimeout(openPersona, 600);
   if (!LIVE && !LS.persona) setTimeout(openPersona, 600);
-  logVisit();
-  loadStats();
+  logVisit().then(loadStats);   // log this visit first, then show stats including it
 })();
 
 /* ---------- Constellation background ---------- */
