@@ -261,9 +261,17 @@ select.ctl {
 .cmt .head { display: flex; gap: 8px; align-items: baseline; }
 .cmt .who { font-weight: 700; font-size: .84rem; }
 .cmt .when { color: var(--muted); font-size: .74rem; }
+.cmt .cmt-up {
+  border: 1px solid var(--hairline); background: var(--surface-2); color: var(--ink-2);
+  cursor: pointer; font-size: .74rem; font-weight: 700; font-family: inherit;
+  border-radius: 999px; padding: 2px 10px; margin-left: auto;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.cmt .cmt-up:hover { border-color: var(--accent); color: var(--accent); }
+.cmt .cmt-up.voted { background: var(--accent); border-color: var(--accent); color: #fff; }
 .cmt .del {
   border: none; background: none; color: var(--muted); cursor: pointer;
-  font-size: .74rem; padding: 0 4px; margin-left: auto; font-family: inherit;
+  font-size: .74rem; padding: 0 4px; font-family: inherit;
 }
 .cmt .del:hover { color: var(--warm); text-decoration: underline; }
 .cmt .body { font-size: .9rem; color: var(--ink-2); margin-top: 2px; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -530,7 +538,9 @@ const LS = {
   get demoSuggestions() { try { return JSON.parse(localStorage.getItem("aisci_demo_sugg")) || []; } catch { return []; } },
   set demoSuggestions(v) { localStorage.setItem("aisci_demo_sugg", JSON.stringify(v)); },
   get demoComments() { try { return JSON.parse(localStorage.getItem("aisci_demo_cmts")) || []; } catch { return []; } },
-  set demoComments(v) { localStorage.setItem("aisci_demo_cmts", JSON.stringify(v)); }
+  set demoComments(v) { localStorage.setItem("aisci_demo_cmts", JSON.stringify(v)); },
+  get demoCmtVotes() { try { return JSON.parse(localStorage.getItem("aisci_demo_cvotes")) || {}; } catch { return {}; } },
+  set demoCmtVotes(v) { localStorage.setItem("aisci_demo_cvotes", JSON.stringify(v)); }
 };
 
 const LIVE = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
@@ -547,6 +557,8 @@ let profile = null;          // {field, stage, display_name} from the profiles t
 let comments = {};           // resourceId -> [{id, author_id, author_name, body, created_at}]
 let openComments = new Set();// resource ids with expanded comment sections
 let cmtDrafts = {};          // resourceId -> unsent composer text (survives re-renders)
+let cmtVotes = {};           // commentId (string) -> upvote total
+let myCmtVotes = new Set();  // commentIds (string) this user has upvoted
 
 /* The active academic background: the signed-in profile in live
    mode, or the locally-stored one in demo mode. */
@@ -598,12 +610,14 @@ $("#themeToggle").onclick = () =>
 async function loadData() {
   if (LIVE) {
     const uid = session?.user?.id;
-    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }, { data: cmts }] = await Promise.all([
+    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }, { data: cmts }, { data: cvc }, { data: mycv }] = await Promise.all([
       sb.from("resources").select("*").eq("approved", true).order("created_at", { ascending: true }),
       sb.from("vote_counts").select("*"),
       uid ? sb.from("votes").select("resource_id").eq("voter_id", uid) : Promise.resolve({ data: [] }),
       uid ? sb.from("profiles").select("*").eq("id", uid).maybeSingle() : Promise.resolve({ data: null }),
-      sb.from("comments").select("*").order("created_at", { ascending: true })
+      sb.from("comments").select("*").order("created_at", { ascending: true }),
+      sb.from("comment_vote_counts").select("*"),
+      uid ? sb.from("comment_votes").select("comment_id").eq("voter_id", uid) : Promise.resolve({ data: [] })
     ]);
     if (e1 || e2 || e3) { toast("Couldn't reach the database — check your Supabase config."); console.error(e1 || e2 || e3); return; }
     resources = res || [];
@@ -613,6 +627,9 @@ async function loadData() {
     myVotes = new Set((mine || []).map(v => v.resource_id));
     comments = {};
     (cmts || []).forEach(c => (comments[c.resource_id] ||= []).push(c));
+    cmtVotes = {};
+    (cvc || []).forEach(v => cmtVotes[String(v.comment_id)] = v.n);
+    myCmtVotes = new Set((mycv || []).map(v => String(v.comment_id)));
   } else {
     $("#demoBanner").hidden = false;
     resources = [...SEED_RESOURCES, ...LS.demoSuggestions];
@@ -622,6 +639,10 @@ async function loadData() {
     myVotes = new Set(Object.keys(dv).filter(k => dv[k]));
     comments = {};
     LS.demoComments.forEach(c => (comments[c.resource_id] ||= []).push(c));
+    const dcv = LS.demoCmtVotes;
+    myCmtVotes = new Set(Object.keys(dcv).filter(k => dcv[k]));
+    cmtVotes = {};
+    myCmtVotes.forEach(k => cmtVotes[k] = 1);
     // fold my demo votes into the aggregate
     const p = LS.persona || { field: "Other", stage: "Other" };
     for (const rid of myVotes) {
@@ -744,6 +765,25 @@ async function deleteComment(r, cid) {
 function isMyComment(c) {
   return LIVE ? c.author_id === session?.user?.id : c.author_id === "demo-you";
 }
+async function toggleCmtVote(cid) {
+  if (!requireIdentity()) return;
+  cid = String(cid);
+  const had = myCmtVotes.has(cid);
+  if (LIVE) {
+    if (had) {
+      const { error } = await sb.from("comment_votes").delete().eq("comment_id", cid).eq("voter_id", session.user.id);
+      if (error) { toast("Couldn't remove upvote."); console.error(error); return; }
+    } else {
+      const { error } = await sb.from("comment_votes").insert({ comment_id: cid, voter_id: session.user.id });
+      if (error) { toast("Couldn't upvote."); console.error(error); return; }
+    }
+    await loadData();
+  } else {
+    const dcv = LS.demoCmtVotes; dcv[cid] = !had; LS.demoCmtVotes = dcv;
+    await loadData();
+  }
+  render();
+}
 function fmtWhen(iso) {
   const d = new Date(iso), diff = (Date.now() - d.getTime()) / 1000;
   if (diff < 3600) return Math.max(1, Math.round(diff / 60)) + "m ago";
@@ -752,18 +792,26 @@ function fmtWhen(iso) {
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 function commentsHtml(r) {
-  const cs = comments[r.id] || [];
+  const cs = [...(comments[r.id] || [])].sort((a, b) =>
+    (cmtVotes[String(b.id)] || 0) - (cmtVotes[String(a.id)] || 0) ||
+    new Date(a.created_at) - new Date(b.created_at));
   const canPost = LIVE ? Boolean(session) : true;
   return `<div class="cmts">
-    ${cs.length ? cs.map(c => `
+    ${cs.length ? cs.map(c => {
+      const n = cmtVotes[String(c.id)] || 0;
+      const voted = myCmtVotes.has(String(c.id));
+      return `
       <div class="cmt">
         <div class="head">
           <span class="who">${esc(c.author_name || "Anonymous")}</span>
           <span class="when">${esc(fmtWhen(c.created_at))}</span>
+          <button class="cmt-up ${voted ? "voted" : ""}" data-cmtvote="${esc(String(c.id))}"
+            aria-pressed="${voted}" title="${voted ? "Remove upvote" : "Upvote this comment"}">▲${n ? " " + n : ""}</button>
           ${isMyComment(c) ? `<button class="del" data-delcmt="${esc(String(c.id))}" data-res="${esc(String(r.id))}">delete</button>` : ""}
         </div>
         <div class="body">${esc(c.body)}</div>
-      </div>`).join("") : `<div class="cmt-empty">No comments yet — start the discussion.</div>`}
+      </div>`;
+    }).join("") : `<div class="cmt-empty">No comments yet — start the discussion.</div>`}
     ${canPost
       ? `<div class="cmt-box">
            <textarea id="cmtIn-${esc(String(r.id))}" maxlength="2000" rows="1"
@@ -914,6 +962,9 @@ function render() {
     t.oninput = () => { cmtDrafts[t.id.slice(6)] = t.value; };
   });
   $$("#resourceGrid [data-cmtsignin]").forEach(a => a.onclick = openAuth);
+  $$("#resourceGrid [data-cmtvote]").forEach(b => {
+    b.onclick = () => toggleCmtVote(b.dataset.cmtvote);
+  });
 
   // stats
   const totalVotes = Object.values(voteAgg).flat().reduce((t, a) => t + a.n, 0);
