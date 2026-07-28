@@ -248,6 +248,38 @@ select.ctl {
   border: 1.5px dashed var(--hairline); border-radius: var(--radius);
 }
 
+/* ---------- Comments ---------- */
+.cmt-toggle { border: none; background: none; box-shadow: none; padding: 3px 6px; }
+.cmts {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--hairline);
+  margin-top: 4px; padding-top: 10px;
+  animation: rise .25s ease both;
+}
+.cmt { padding: 8px 0; border-bottom: 1px solid color-mix(in oklab, var(--hairline) 55%, transparent); }
+.cmt:last-of-type { border-bottom: none; }
+.cmt .head { display: flex; gap: 8px; align-items: baseline; }
+.cmt .who { font-weight: 700; font-size: .84rem; }
+.cmt .when { color: var(--muted); font-size: .74rem; }
+.cmt .del {
+  border: none; background: none; color: var(--muted); cursor: pointer;
+  font-size: .74rem; padding: 0 4px; margin-left: auto; font-family: inherit;
+}
+.cmt .del:hover { color: var(--warm); text-decoration: underline; }
+.cmt .body { font-size: .9rem; color: var(--ink-2); margin-top: 2px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cmt-box { display: flex; gap: 8px; margin-top: 10px; align-items: flex-end; }
+.cmt-box textarea {
+  flex: 1; font-family: inherit; font-size: .9rem; color: var(--ink);
+  background: var(--surface-2); border: 1px solid var(--hairline);
+  border-radius: 10px; padding: 8px 12px; outline: none; resize: vertical;
+  min-height: 40px; max-height: 160px;
+}
+.cmt-box textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent); }
+.cmt-box .btn { padding: 8px 16px; font-size: .86rem; }
+.cmt-signin { color: var(--muted); font-size: .86rem; padding: 6px 0; }
+.cmt-signin a { color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.cmt-empty { color: var(--muted); font-size: .86rem; padding: 4px 0; }
+
 /* ---------- Modal ---------- */
 .overlay {
   position: fixed; inset: 0; background: rgba(11,11,11,.45);
@@ -496,7 +528,9 @@ const LS = {
   get demoVotes() { try { return JSON.parse(localStorage.getItem("aisci_demo_votes")) || {}; } catch { return {}; } },
   set demoVotes(v) { localStorage.setItem("aisci_demo_votes", JSON.stringify(v)); },
   get demoSuggestions() { try { return JSON.parse(localStorage.getItem("aisci_demo_sugg")) || []; } catch { return []; } },
-  set demoSuggestions(v) { localStorage.setItem("aisci_demo_sugg", JSON.stringify(v)); }
+  set demoSuggestions(v) { localStorage.setItem("aisci_demo_sugg", JSON.stringify(v)); },
+  get demoComments() { try { return JSON.parse(localStorage.getItem("aisci_demo_cmts")) || []; } catch { return []; } },
+  set demoComments(v) { localStorage.setItem("aisci_demo_cmts", JSON.stringify(v)); }
 };
 
 const LIVE = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
@@ -510,6 +544,9 @@ let sortMode = "foryou";
 let filters = { q: "", disc: "", type: "", level: "", cat: "" };
 let session = null;          // Supabase auth session (live mode)
 let profile = null;          // {field, stage, display_name} from the profiles table
+let comments = {};           // resourceId -> [{id, author_id, author_name, body, created_at}]
+let openComments = new Set();// resource ids with expanded comment sections
+let cmtDrafts = {};          // resourceId -> unsent composer text (survives re-renders)
 
 /* The active academic background: the signed-in profile in live
    mode, or the locally-stored one in demo mode. */
@@ -561,11 +598,12 @@ $("#themeToggle").onclick = () =>
 async function loadData() {
   if (LIVE) {
     const uid = session?.user?.id;
-    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }] = await Promise.all([
+    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }, { data: cmts }] = await Promise.all([
       sb.from("resources").select("*").eq("approved", true).order("created_at", { ascending: true }),
       sb.from("vote_counts").select("*"),
       uid ? sb.from("votes").select("resource_id").eq("voter_id", uid) : Promise.resolve({ data: [] }),
-      uid ? sb.from("profiles").select("*").eq("id", uid).maybeSingle() : Promise.resolve({ data: null })
+      uid ? sb.from("profiles").select("*").eq("id", uid).maybeSingle() : Promise.resolve({ data: null }),
+      sb.from("comments").select("*").order("created_at", { ascending: true })
     ]);
     if (e1 || e2 || e3) { toast("Couldn't reach the database — check your Supabase config."); console.error(e1 || e2 || e3); return; }
     resources = res || [];
@@ -573,6 +611,8 @@ async function loadData() {
     voteAgg = {};
     (agg || []).forEach(a => (voteAgg[a.resource_id] ||= []).push(a));
     myVotes = new Set((mine || []).map(v => v.resource_id));
+    comments = {};
+    (cmts || []).forEach(c => (comments[c.resource_id] ||= []).push(c));
   } else {
     $("#demoBanner").hidden = false;
     resources = [...SEED_RESOURCES, ...LS.demoSuggestions];
@@ -580,6 +620,8 @@ async function loadData() {
     resources.forEach(r => { if (r.demoVotes) voteAgg[r.id] = r.demoVotes.map(v => ({ ...v })); });
     const dv = LS.demoVotes;
     myVotes = new Set(Object.keys(dv).filter(k => dv[k]));
+    comments = {};
+    LS.demoComments.forEach(c => (comments[c.resource_id] ||= []).push(c));
     // fold my demo votes into the aggregate
     const p = LS.persona || { field: "Other", stage: "Other" };
     for (const rid of myVotes) {
@@ -660,6 +702,76 @@ async function toggleVote(r) {
   }
   render();
   toast(had ? "Vote removed" : "Upvoted ▲");
+}
+
+/* ---------- Comments ---------- */
+async function postComment(r) {
+  if (!requireIdentity()) return;
+  const box = $(`#cmtIn-${CSS.escape(String(r.id))}`);
+  const body = (box?.value || "").trim();
+  if (!body) { toast("Write a comment first."); return; }
+  if (LIVE) {
+    const { error } = await sb.from("comments").insert({
+      resource_id: r.id, author_id: session.user.id,
+      author_name: displayName(), body
+    });
+    if (error) { toast("Couldn't post comment."); console.error(error); return; }
+    await loadData();
+  } else {
+    LS.demoComments = [...LS.demoComments, {
+      id: "local-" + crypto.randomUUID(), resource_id: r.id,
+      author_id: "demo-you", author_name: "You (demo)", body,
+      created_at: new Date().toISOString()
+    }];
+    await loadData();
+  }
+  delete cmtDrafts[r.id];
+  render();
+  toast("Comment posted 💬");
+}
+async function deleteComment(r, cid) {
+  if (LIVE) {
+    const { error } = await sb.from("comments").delete().eq("id", cid);
+    if (error) { toast("Couldn't delete comment."); console.error(error); return; }
+    await loadData();
+  } else {
+    LS.demoComments = LS.demoComments.filter(c => String(c.id) !== String(cid));
+    await loadData();
+  }
+  render();
+  toast("Comment deleted");
+}
+function isMyComment(c) {
+  return LIVE ? c.author_id === session?.user?.id : c.author_id === "demo-you";
+}
+function fmtWhen(iso) {
+  const d = new Date(iso), diff = (Date.now() - d.getTime()) / 1000;
+  if (diff < 3600) return Math.max(1, Math.round(diff / 60)) + "m ago";
+  if (diff < 86400) return Math.round(diff / 3600) + "h ago";
+  if (diff < 86400 * 7) return Math.round(diff / 86400) + "d ago";
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+}
+function commentsHtml(r) {
+  const cs = comments[r.id] || [];
+  const canPost = LIVE ? Boolean(session) : true;
+  return `<div class="cmts">
+    ${cs.length ? cs.map(c => `
+      <div class="cmt">
+        <div class="head">
+          <span class="who">${esc(c.author_name || "Anonymous")}</span>
+          <span class="when">${esc(fmtWhen(c.created_at))}</span>
+          ${isMyComment(c) ? `<button class="del" data-delcmt="${esc(String(c.id))}" data-res="${esc(String(r.id))}">delete</button>` : ""}
+        </div>
+        <div class="body">${esc(c.body)}</div>
+      </div>`).join("") : `<div class="cmt-empty">No comments yet — start the discussion.</div>`}
+    ${canPost
+      ? `<div class="cmt-box">
+           <textarea id="cmtIn-${esc(String(r.id))}" maxlength="2000" rows="1"
+             placeholder="Share your experience with this resource…">${esc(cmtDrafts[r.id] || "")}</textarea>
+           <button class="btn primary" data-postcmt="${esc(String(r.id))}">Post</button>
+         </div>`
+      : `<div class="cmt-signin"><a data-cmtsignin>Sign in</a> to join the discussion.</div>`}
+  </div>`;
 }
 
 /* ---------- Suggesting ---------- */
@@ -769,14 +881,39 @@ function render() {
             ${(r.disciplines || []).map(d => `<span class="tag">${esc(d)}</span>`).join("")}
             ${matchTag}
             ${r.suggested_by ? `<span class="tag">by ${esc(r.suggested_by)}</span>` : ""}
+            <button class="chip cmt-toggle" data-cmt="${esc(String(r.id))}" aria-expanded="${openComments.has(r.id)}">
+              💬 ${(comments[r.id] || []).length || ""} ${(comments[r.id] || []).length === 1 ? "comment" : "comments"}
+            </button>
           </div>
         </div>
+        ${openComments.has(r.id) ? commentsHtml(r) : ""}
       </div>`;
     }).join("");
   }
   $$("#resourceGrid [data-vote]").forEach(b => {
     b.onclick = () => { const r = resources.find(x => String(x.id) === b.dataset.vote); if (r) toggleVote(r); };
   });
+  $$("#resourceGrid [data-cmt]").forEach(b => {
+    b.onclick = () => {
+      const id = b.dataset.cmt;
+      const rid = resources.find(x => String(x.id) === id)?.id;
+      openComments.has(rid) ? openComments.delete(rid) : openComments.add(rid);
+      render();
+    };
+  });
+  $$("#resourceGrid [data-postcmt]").forEach(b => {
+    b.onclick = () => { const r = resources.find(x => String(x.id) === b.dataset.postcmt); if (r) postComment(r); };
+  });
+  $$("#resourceGrid [data-delcmt]").forEach(b => {
+    b.onclick = () => {
+      const r = resources.find(x => String(x.id) === b.dataset.res);
+      if (r && confirm("Delete this comment?")) deleteComment(r, b.dataset.delcmt);
+    };
+  });
+  $$("#resourceGrid textarea[id^='cmtIn-']").forEach(t => {
+    t.oninput = () => { cmtDrafts[t.id.slice(6)] = t.value; };
+  });
+  $$("#resourceGrid [data-cmtsignin]").forEach(a => a.onclick = openAuth);
 
   // stats
   const totalVotes = Object.values(voteAgg).flat().reduce((t, a) => t + a.n, 0);
