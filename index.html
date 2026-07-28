@@ -600,8 +600,9 @@ function scores(r) {
 /* ---------- Theme ---------- */
 function applyTheme(t) { document.documentElement.dataset.theme = t; localStorage.setItem("aisci_theme", t); }
 (function initTheme() {
+  // Dark by default; visitors can still switch and their choice is remembered
   const saved = localStorage.getItem("aisci_theme");
-  applyTheme(saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+  applyTheme(saved || "dark");
 })();
 $("#themeToggle").onclick = () =>
   applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
