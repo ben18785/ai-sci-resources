@@ -394,6 +394,26 @@ select.ctl {
 .stat .cap { font-size: .8rem; color: var(--muted); font-weight: 600; }
 .usage-line { margin-top: 14px; font-size: .8rem; color: var(--muted); }
 .usage-line b { color: var(--ink-2); font-weight: 700; }
+.linky {
+  border: none; background: none; padding: 0; font: inherit; color: inherit;
+  cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px;
+}
+.linky:hover { color: var(--accent); }
+.linky b { color: inherit; }
+
+/* ---------- Visitor map ---------- */
+#mapBox svg { width: 100%; height: auto; display: block; }
+#mapBox path { stroke: var(--hairline); stroke-width: .5; transition: opacity .12s; }
+#mapBox path:hover { opacity: .8; stroke: var(--ink-2); }
+.map-tip {
+  position: fixed; z-index: 90; pointer-events: none;
+  background: var(--ink); color: var(--page);
+  border-radius: 8px; padding: 6px 11px; font-size: .8rem; font-weight: 600;
+  box-shadow: var(--shadow-lg); display: none; max-width: 240px;
+}
+.map-legend { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: .76rem; color: var(--muted); flex-wrap: wrap; }
+.map-legend .swatches { display: flex; height: 10px; border-radius: 5px; overflow: hidden; }
+.map-legend .swatches i { width: 26px; }
 
 /* ---------- Votes-by-discipline mini chart ---------- */
 .field-chart { margin-left: auto; min-width: 250px; max-width: 330px; flex: 1; }
@@ -549,6 +569,17 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
     </div>
   </div>
 </div>
+
+<!-- Visitor map modal -->
+<div class="overlay" id="mapOverlay">
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="mapTitle">
+    <h2 id="mapTitle">Where visitors come from</h2>
+    <p class="hint">Unique visitors by country — hover a country for its counts. Only a country code is ever recorded, nothing personal.</p>
+    <div id="mapBox" style="margin-top:14px"></div>
+    <div class="actions"><button class="btn ghost" id="closeMap">Close</button></div>
+  </div>
+</div>
+<div class="map-tip" id="mapTip"></div>
 
 <!-- Resource detail modal -->
 <div class="overlay" id="detailOverlay">
@@ -1108,10 +1139,105 @@ async function loadStats() {
     const { data } = await sb.from("site_stats").select("*").maybeSingle();
     if (!data) return;
     const f = n => (n || 0).toLocaleString();
+    const cbtn = (n, one, many) => `<button class="linky" data-map title="See the visitor map"><b>${f(n)}</b> ${n === 1 ? one : many} 🗺</button>`;
     $("#usageLine").innerHTML =
-      `Last 30 days: <b>${f(data.people_30d)}</b> ${data.people_30d === 1 ? "person" : "people"} · <b>${f(data.sessions_30d)}</b> sessions · <b>${f(data.countries_30d)}</b> ${data.countries_30d === 1 ? "country" : "countries"}
-       &nbsp;·&nbsp; Since launch: <b>${f(data.people_all)}</b> ${data.people_all === 1 ? "person" : "people"} · <b>${f(data.sessions_all)}</b> sessions · <b>${f(data.countries_all)}</b> ${data.countries_all === 1 ? "country" : "countries"}`;
+      `Last 30 days: <b>${f(data.people_30d)}</b> ${data.people_30d === 1 ? "person" : "people"} · <b>${f(data.sessions_30d)}</b> sessions · ${cbtn(data.countries_30d, "country", "countries")}
+       &nbsp;·&nbsp; Since launch: <b>${f(data.people_all)}</b> ${data.people_all === 1 ? "person" : "people"} · <b>${f(data.sessions_all)}</b> sessions · ${cbtn(data.countries_all, "country", "countries")}`;
+    $$("#usageLine [data-map]").forEach(b => b.onclick = openMap);
   } catch {}
+}
+
+/* ---------- Visitor world map ---------- */
+// ISO 3166-1: alpha-2 <-> numeric (compact packed string)
+const ISO_PACKED = "AD020AE784AF004AG028AI660AL008AM051AO024AQ010AR032AS016AT040AU036AW533AX248AZ031BA070BB052BD050BE056BF854BG100BH048BI108BJ204BL652BM060BN096BO068BQ535BR076BS044BT064BV074BW072BY112BZ084CA124CC166CD180CF140CG178CH756CI384CK184CL152CM120CN156CO170CR188CU192CV132CW531CX162CY196CZ203DE276DJ262DK208DM212DO214DZ012EC218EE233EG818EH732ER232ES724ET231FI246FJ242FK238FM583FO234FR250GA266GB826GD308GE268GF254GG831GH288GI292GL304GM270GN324GP312GQ226GR300GS239GT320GU316GW624GY328HK344HM334HN340HR191HT332HU348ID360IE372IL376IM833IN356IO086IQ368IR364IS352IT380JE832JM388JO400JP392KE404KG417KH116KI296KM174KN659KP408KR410KW414KY136KZ398LA418LB422LC662LI438LK144LR430LS426LT440LU442LV428LY434MA504MC492MD498ME499MF663MG450MH584MK807ML466MM104MN496MO446MP580MQ474MR478MS500MT470MU480MV462MW454MX484MY458MZ508NA516NC540NE562NF574NG566NI558NL528NO578NP524NR520NU570NZ554OM512PA591PE604PF258PG598PH608PK586PL616PM666PN612PR630PS275PT620PW585PY600QA634RE638RO642RS688RU643RW646SA682SB090SC690SD729SE752SG702SH654SI705SJ744SK703SL694SM674SN686SO706SR740SS728ST678SV222SX534SY760SZ748TC796TD148TF260TG768TH764TJ762TK772TL626TM795TN788TO776TR792TT780TV798TW158TZ834UA804UG800UM581US840UY858UZ860VA336VC670VE862VG092VI850VN704VU548WF876WS882YE887YT175ZA710ZM894ZW716";
+const NUM_TO_A2 = {};
+for (let i = 0; i < ISO_PACKED.length; i += 5) NUM_TO_A2[ISO_PACKED.slice(i + 2, i + 5)] = ISO_PACKED.slice(i, i + 2);
+
+// Minimal TopoJSON -> polygons decoder (enough for world-atlas)
+function topoToFeatures(topo, objName) {
+  const t = topo.transform;
+  const arcs = topo.arcs.map(arc => {
+    let x = 0, y = 0;
+    return arc.map(([dx, dy]) => {
+      x += dx; y += dy;
+      return [x * t.scale[0] + t.translate[0], y * t.scale[1] + t.translate[1]];
+    });
+  });
+  const ring = idxs => {
+    const pts = [];
+    for (const i of idxs) {
+      let a = i >= 0 ? arcs[i] : arcs[~i].slice().reverse();
+      if (pts.length) a = a.slice(1);
+      pts.push(...a);
+    }
+    return pts;
+  };
+  return topo.objects[objName].geometries.map(g => ({
+    id: String(g.id).padStart(3, "0"),
+    name: g.properties?.name || "",
+    polys: (g.type === "Polygon" ? [g.arcs] : (g.arcs || [])).map(p => p.map(ring))
+  }));
+}
+
+const MAP_RAMP = ["#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95"];
+let mapBuilt = false;
+
+async function openMap() {
+  $("#mapOverlay").classList.add("open");
+  if (mapBuilt || !LIVE) return;
+  const box = $("#mapBox");
+  box.innerHTML = `<div class="cmt-empty">Loading map\u2026</div>`;
+  try {
+    const [{ data: cs }, topoResp] = await Promise.all([
+      sb.from("country_stats").select("*"),
+      fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+    ]);
+    buildMap(await topoResp.json(), cs || []);
+    mapBuilt = true;
+  } catch (e) {
+    console.error(e);
+    box.innerHTML = `<div class="cmt-empty">Couldn\u2019t load the map \u2014 try again in a moment.</div>`;
+  }
+}
+
+function buildMap(topo, stats) {
+  const counts = {};
+  stats.forEach(s => counts[s.country] = s);
+  const feats = topoToFeatures(topo, "countries").filter(ft => ft.id !== "010"); // skip Antarctica
+  const max = Math.max(1, ...stats.map(s => s.people));
+  const W = 960, H = 420;
+  const px = ([lon, lat]) => [((lon + 180) / 360 * W).toFixed(1), ((90 - lat) / 180 * (H + 60)).toFixed(1)];
+  const paths = feats.map(ft => {
+    const a2 = NUM_TO_A2[ft.id];
+    const s = a2 && counts[a2];
+    const fill = s ? MAP_RAMP[Math.min(4, Math.floor((s.people / max) * 4.999))] : "var(--surface-2)";
+    const d = ft.polys.map(rings => rings.map(r =>
+      "M" + r.map(px).map(p => p.join(",")).join("L") + "Z").join("")).join("");
+    return `<path d="${d}" fill="${fill}" data-a2="${a2 || ""}" data-name="${esc(ft.name)}"></path>`;
+  }).join("");
+  $("#mapBox").innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="World map of visitors by country">${paths}</svg>
+    <div class="map-legend">
+      <span>1</span>
+      <span class="swatches">${MAP_RAMP.map(c => `<i style="background:${c}"></i>`).join("")}</span>
+      <span>${max.toLocaleString()}</span>
+      <span>unique visitors \u00b7 grey = none yet</span>
+    </div>`;
+  const tip = $("#mapTip");
+  $$("#mapBox path").forEach(p => {
+    p.onmousemove = e => {
+      const a2 = p.dataset.a2;
+      const s = a2 && counts[a2];
+      const name = p.dataset.name || (a2 ? a2 : "Unknown");
+      tip.textContent = s
+        ? `${name}: ${s.people.toLocaleString()} visitor${s.people === 1 ? "" : "s"} \u00b7 ${s.sessions.toLocaleString()} session${s.sessions === 1 ? "" : "s"}`
+        : `${name}: no visits yet`;
+      tip.style.display = "block";
+      tip.style.left = Math.min(innerWidth - 260, e.clientX + 14) + "px";
+      tip.style.top = (e.clientY + 16) + "px";
+    };
+    p.onmouseleave = () => tip.style.display = "none";
+  });
 }
 
 /* ---------- Suggesting ---------- */
@@ -1316,6 +1442,7 @@ $("#activityBtnDemo").onclick = openActivity;
 $("#savePersona").onclick = savePersona;
 $("#skipPersona").onclick = () => closeOverlay("#personaOverlay");
 $("#closeActivity").onclick = () => closeOverlay("#activityOverlay");
+$("#closeMap").onclick = () => { closeOverlay("#mapOverlay"); $("#mapTip").style.display = "none"; };
 function dismissOverlay(o) {
   if (o.id === "detailOverlay") { closeDetail(); return; }
   o.classList.remove("open");
