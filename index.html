@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI in Science — Community Learning Resources</title>
+<meta name="description" content="Vote for the best resources for learning about AI in science, personalised to your academic background.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+/* ============================================================
+   CONFIG-FREE STYLES — palette derived from a validated
+   accessible reference palette (light + dark selected steps)
+   ============================================================ */
+:root {
+  color-scheme: light;
+  --page:        #f9f9f7;
+  --surface:     #fcfcfb;
+  --surface-2:   #f0efec;
+  --ink:         #0b0b0b;
+  --ink-2:       #52514e;
+  --muted:       #898781;
+  --hairline:    #e1e0d9;
+  --border:      rgba(11,11,11,0.10);
+  --accent:      #2a78d6;
+  --accent-soft: #cde2fb;
+  --accent-deep: #1c5cab;
+  --warm:        #eb6834;
+  --good:        #0ca30c;
+  --good-text:   #006300;
+  --gold:        #eda100;
+  --violet:      #4a3aa7;
+  --shadow-sm: 0 1px 2px rgba(11,11,11,.05), 0 2px 8px rgba(11,11,11,.05);
+  --shadow-lg: 0 4px 12px rgba(11,11,11,.08), 0 12px 40px rgba(11,11,11,.10);
+  --radius: 14px;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page:        #0d0d0d;
+  --surface:     #1a1a19;
+  --surface-2:   #242422;
+  --ink:         #ffffff;
+  --ink-2:       #c3c2b7;
+  --muted:       #898781;
+  --hairline:    #2c2c2a;
+  --border:      rgba(255,255,255,0.10);
+  --accent:      #3987e5;
+  --accent-soft: #10305a;
+  --accent-deep: #86b6ef;
+  --warm:        #d95926;
+  --good:        #0ca30c;
+  --good-text:   #0ca30c;
+  --gold:        #c98500;
+  --violet:      #9085e9;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.3), 0 2px 8px rgba(0,0,0,.3);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,.4), 0 12px 40px rgba(0,0,0,.5);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--page);
+  color: var(--ink);
+  line-height: 1.55;
+  min-height: 100vh;
+  transition: background .25s ease, color .25s ease;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(1100px 500px at 15% -10%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 60%),
+    radial-gradient(900px 420px at 85% -20%, color-mix(in oklab, var(--violet) 18%, transparent), transparent 60%),
+    var(--page);
+  border-bottom: 1px solid var(--hairline);
+}
+.hero-inner {
+  max-width: 1080px; margin: 0 auto;
+  padding: 56px 24px 40px;
+}
+.hero h1 {
+  font-size: clamp(1.9rem, 4.4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  max-width: 21ch;
+}
+.hero h1 .grad {
+  background: linear-gradient(92deg, var(--accent), var(--violet));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.hero p.sub {
+  margin-top: 14px; max-width: 58ch;
+  color: var(--ink-2); font-size: 1.06rem;
+}
+.hero .cta-row { margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.topbar {
+  max-width: 1080px; margin: 0 auto;
+  padding: 18px 24px 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.01em; }
+.brand-mark {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--violet));
+  display: grid; place-items: center; color: #fff; font-size: 17px;
+  box-shadow: var(--shadow-sm);
+}
+.top-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ---------- Buttons & chips ---------- */
+.btn {
+  appearance: none; border: 1px solid var(--border);
+  background: var(--surface); color: var(--ink);
+  border-radius: 999px; padding: 9px 18px;
+  font-size: .92rem; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: transform .12s ease, box-shadow .12s ease, background .15s;
+  box-shadow: var(--shadow-sm);
+}
+.btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.btn:active { transform: translateY(0); }
+.btn.primary {
+  background: linear-gradient(92deg, var(--accent), var(--accent-deep));
+  color: #fff; border-color: transparent;
+}
+:root[data-theme="dark"] .btn.primary { background: linear-gradient(92deg, var(--accent), #256abf); }
+.btn.ghost { background: transparent; box-shadow: none; }
+.btn.icon { width: 38px; height: 38px; padding: 0; display: grid; place-items: center; font-size: 1.05rem; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface); color: var(--ink-2);
+  padding: 5px 13px; font-size: .82rem; font-weight: 600;
+  cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+  user-select: none;
+}
+.chip:hover { border-color: var(--accent); color: var(--ink); }
+.chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ---------- Persona banner ---------- */
+.persona {
+  display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; padding: 6px 8px 6px 16px;
+  box-shadow: var(--shadow-sm); font-size: .9rem; color: var(--ink-2);
+}
+.persona b { color: var(--ink); }
+.persona .edit { font-size: .8rem; padding: 5px 12px; }
+.userchip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; padding: 4px 12px 4px 5px;
+  box-shadow: var(--shadow-sm); font-size: .85rem; font-weight: 650;
+}
+.userchip img { width: 26px; height: 26px; border-radius: 50%; }
+.userchip .out { border: none; background: none; color: var(--muted); cursor: pointer; font-family: inherit; font-size: .8rem; padding: 2px 4px; }
+.userchip .out:hover { color: var(--ink); text-decoration: underline; }
+.auth-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+.auth-buttons .btn { justify-content: center; display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px; font-size: .96rem; }
+.auth-buttons svg { flex: none; }
+
+/* ---------- Layout ---------- */
+.wrap { max-width: 1080px; margin: 0 auto; padding: 26px 24px 80px; }
+.controls {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  margin-bottom: 6px;
+}
+.controls .spacer { flex: 1; }
+.search {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; padding: 8px 16px; min-width: 220px; flex: 1;
+  max-width: 340px; box-shadow: var(--shadow-sm);
+}
+.search input {
+  border: none; outline: none; background: transparent;
+  font-family: inherit; font-size: .95rem; color: var(--ink); width: 100%;
+}
+select.ctl {
+  appearance: none; font-family: inherit; font-size: .88rem; font-weight: 600;
+  color: var(--ink); background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; padding: 8px 32px 8px 14px; cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23898781' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 13px center;
+}
+.tabs { display: flex; gap: 4px; background: var(--surface-2); border-radius: 999px; padding: 4px; margin: 18px 0 22px; width: max-content; max-width: 100%; overflow-x: auto; }
+.tab {
+  border: none; background: transparent; color: var(--ink-2);
+  font-family: inherit; font-weight: 650; font-size: .9rem;
+  border-radius: 999px; padding: 8px 18px; cursor: pointer; white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.tab.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+
+/* ---------- Cards ---------- */
+.grid { display: grid; gap: 14px; }
+.card {
+  display: grid; grid-template-columns: auto 1fr; gap: 16px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  transition: transform .15s ease, box-shadow .15s ease;
+  animation: rise .35s ease both;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.vote {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  align-self: start;
+}
+.vote button {
+  width: 52px; height: 52px; border-radius: 14px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  color: var(--ink-2); font-size: 1.25rem; cursor: pointer;
+  display: grid; place-items: center;
+  transition: background .15s, color .15s, transform .12s, border-color .15s;
+}
+.vote button:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+.vote button.voted {
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  color: #fff; border-color: transparent;
+}
+:root[data-theme="dark"] .vote button.voted { background: linear-gradient(135deg, var(--accent), #256abf); }
+.vote .count { font-weight: 800; font-size: 1.05rem; }
+.vote .lbl { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.card h3 { font-size: 1.06rem; letter-spacing: -0.01em; line-height: 1.3; }
+.card h3 a { color: inherit; text-decoration: none; }
+.card h3 a:hover { color: var(--accent); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.card .desc { color: var(--ink-2); font-size: .93rem; margin-top: 5px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; align-items: center; }
+.tag {
+  font-size: .74rem; font-weight: 650; border-radius: 7px; padding: 3px 9px;
+  background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--hairline);
+}
+.tag.type { background: var(--accent-soft); color: var(--accent-deep); border-color: transparent; }
+.tag.cat { background: color-mix(in oklab, var(--violet) 12%, var(--surface)); color: var(--violet); border-color: transparent; }
+.tag.match {
+  background: color-mix(in oklab, var(--good) 14%, var(--surface));
+  color: var(--good-text); border-color: transparent;
+  display: inline-flex; gap: 4px; align-items: center;
+}
+.tag.level { text-transform: capitalize; }
+.empty {
+  text-align: center; color: var(--muted); padding: 60px 20px;
+  border: 1.5px dashed var(--hairline); border-radius: var(--radius);
+}
+
+/* ---------- Modal ---------- */
+.overlay {
+  position: fixed; inset: 0; background: rgba(11,11,11,.45);
+  backdrop-filter: blur(4px);
+  display: grid; place-items: center; padding: 20px; z-index: 50;
+  opacity: 0; pointer-events: none; transition: opacity .2s ease;
+}
+.overlay.open { opacity: 1; pointer-events: auto; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; box-shadow: var(--shadow-lg);
+  width: min(560px, 100%); max-height: 88vh; overflow-y: auto;
+  padding: 30px 30px 26px;
+  transform: translateY(10px) scale(.98); transition: transform .2s ease;
+}
+.overlay.open .modal { transform: none; }
+.modal h2 { font-size: 1.35rem; letter-spacing: -0.015em; }
+.modal p.hint { color: var(--ink-2); font-size: .93rem; margin-top: 6px; }
+.field { margin-top: 18px; }
+.field label { display: block; font-size: .84rem; font-weight: 700; margin-bottom: 8px; color: var(--ink-2); }
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.field input[type=text], .field input[type=url], .field textarea, .field select {
+  width: 100%; font-family: inherit; font-size: .95rem; color: var(--ink);
+  background: var(--surface-2); border: 1px solid var(--hairline);
+  border-radius: 10px; padding: 10px 14px; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent);
+}
+.field textarea { resize: vertical; min-height: 70px; }
+.modal .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 26px; }
+
+/* ---------- Toast & misc ---------- */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--ink); color: var(--page);
+  border-radius: 999px; padding: 11px 22px; font-size: .9rem; font-weight: 600;
+  box-shadow: var(--shadow-lg); z-index: 60; transition: transform .25s ease;
+  max-width: calc(100vw - 40px); text-align: center;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.banner-demo {
+  background: color-mix(in oklab, var(--gold) 16%, var(--surface));
+  border: 1px solid color-mix(in oklab, var(--gold) 45%, transparent);
+  color: var(--ink); border-radius: 12px; padding: 10px 16px;
+  font-size: .88rem; margin-bottom: 18px;
+}
+.stats-row { display: flex; gap: 26px; margin-top: 26px; flex-wrap: wrap; }
+.stat .num { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; }
+.stat .cap { font-size: .8rem; color: var(--muted); font-weight: 600; }
+footer { border-top: 1px solid var(--hairline); color: var(--muted); font-size: .84rem; }
+footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .card { grid-template-columns: auto 1fr; padding: 14px; }
+  .vote button { width: 46px; height: 46px; }
+  .hero-inner { padding: 40px 20px 30px; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark">⚛</span> AI in Science</div>
+    <div class="top-actions">
+      <button class="btn icon ghost" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
+      <span id="authArea"></span>
+      <button class="btn primary" id="suggestBtn">＋ Suggest a resource</button>
+    </div>
+  </div>
+  <div class="hero-inner">
+    <h1>The community-ranked guide to <span class="grad">learning AI for science</span></h1>
+    <p class="sub">Upvote the courses, papers, books and tools that helped you most — and see what researchers with a background like yours found valuable.</p>
+    <div class="cta-row">
+      <div class="persona" id="personaBar" hidden>
+        <span id="personaText"></span>
+        <button class="btn edit" id="editPersona">Change</button>
+      </div>
+    </div>
+    <div class="stats-row" id="statsRow"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="banner-demo" id="demoBanner" hidden>
+    <b>Demo mode.</b> No backend configured yet — votes are stored only in this browser. Follow <code>SETUP.md</code> to connect the free Supabase backend and make voting live for everyone.
+  </div>
+
+  <div class="controls">
+    <div class="search">🔍 <input type="search" id="searchBox" placeholder="Search resources…" aria-label="Search resources"></div>
+    <select class="ctl" id="filterCategory"><option value="">All topics</option></select>
+    <select class="ctl" id="filterDiscipline"><option value="">All disciplines</option></select>
+    <select class="ctl" id="filterType"><option value="">All types</option></select>
+    <select class="ctl" id="filterLevel">
+      <option value="">All levels</option>
+      <option value="beginner">Beginner</option>
+      <option value="intermediate">Intermediate</option>
+      <option value="advanced">Advanced</option>
+    </select>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-sort="foryou" role="tab">✨ For you</button>
+    <button class="tab" data-sort="top" role="tab">▲ Most upvoted</button>
+    <button class="tab" data-sort="new" role="tab">🕐 Newest</button>
+  </div>
+
+  <div class="grid" id="resourceGrid" aria-live="polite"></div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <span>Built by the community, for the community.</span>
+    <span id="footerNote"></span>
+  </div>
+</footer>
+
+<!-- Onboarding / persona modal -->
+<div class="overlay" id="personaOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="personaTitle">
+    <h2 id="personaTitle">Welcome! Tell us about your background</h2>
+    <p class="hint">We use this to rank resources by how useful people <i>with a background like yours</i> found them. It's only ever shown in aggregate — never alongside your name.</p>
+    <div class="field">
+      <label>Your broad field</label>
+      <div class="chip-row" id="fieldChips"></div>
+    </div>
+    <div class="field">
+      <label>Your career stage</label>
+      <div class="chip-row" id="stageChips"></div>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="skipPersona">Skip for now</button>
+      <button class="btn primary" id="savePersona">Save & explore</button>
+    </div>
+  </div>
+</div>
+
+<!-- Suggest resource modal -->
+<div class="overlay" id="suggestOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="suggestTitle">
+    <h2 id="suggestTitle">Suggest a resource</h2>
+    <p class="hint">Know a great course, paper, book or tool for learning AI in science? Add it for the community to vote on.</p>
+    <div class="field"><label for="sTitle">Title *</label><input type="text" id="sTitle" maxlength="160" placeholder="e.g. Deep Learning for Molecules & Materials"></div>
+    <div class="field"><label for="sUrl">Link</label><input type="url" id="sUrl" placeholder="https://…"></div>
+    <div class="field"><label for="sDesc">Why is it useful? *</label><textarea id="sDesc" maxlength="400" placeholder="One or two sentences on what it covers and who it's for"></textarea></div>
+    <div class="field"><label for="sType">Type</label>
+      <select id="sType"></select>
+    </div>
+    <div class="field"><label for="sCat">Topic</label>
+      <select id="sCat"></select>
+    </div>
+    <div class="field"><label>Relevant disciplines (pick any)</label><div class="chip-row" id="sDiscChips"></div></div>
+    <div class="field"><label for="sLevel">Level</label>
+      <select id="sLevel">
+        <option value="any">Any level</option>
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+    </div>
+    <div class="field"><label for="sName">Your name (optional, shown as suggester)</label><input type="text" id="sName" maxlength="60" placeholder="Anonymous"></div>
+    <div class="actions">
+      <button class="btn ghost" id="cancelSuggest">Cancel</button>
+      <button class="btn primary" id="submitSuggest">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sign-in modal -->
+<div class="overlay" id="authOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <h2 id="authTitle">Sign in to take part</h2>
+    <p class="hint">Browsing is open to everyone. Voting and suggesting need a quick sign-in so it's one person, one vote — and so your recommendations follow you across devices. We only receive your name and email address; nothing is ever posted on your behalf.</p>
+    <div class="auth-buttons">
+      <button class="btn" id="ghLogin">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        Continue with GitHub
+      </button>
+      <button class="btn" id="ggLogin">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.1 18.9 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+        Continue with Google
+      </button>
+    </div>
+    <div class="actions"><button class="btn ghost" id="cancelAuth">Maybe later</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Seed data for demo mode (must load before the app script) -->
+<script src="seed-data.js" onerror="this.remove()"></script>
+<script>
+/* ============================================================
+   CONFIG — paste your Supabase project values here.
+   Leave blank to run in local demo mode.
+   (The anon key is safe to publish: row-level security on the
+   database is what controls access.)
+   ============================================================ */
+const SUPABASE_URL      = "https://sxvovqhvlsnvvufcapii.supabase.co/rest/v1/";   // e.g. "https://abcdefgh.supabase.co"
+const SUPABASE_ANON_KEY = "sb_publishable_ss6-RIM6aqrzY_nq1ijklQ_kpINsZs1";   // the long "anon / public" key
+
+/* ---------- Taxonomies ---------- */
+const FIELDS = [
+  "Physical sciences", "Life sciences", "Medicine & health",
+  "Chemistry & materials", "Earth & environment", "Engineering",
+  "Maths & statistics", "Computer science", "Social sciences",
+  "Arts & humanities", "Other"
+];
+const STAGES = [
+  "Undergraduate", "Master's", "PhD / postgrad", "Postdoc / researcher",
+  "Faculty / PI", "Industry / professional", "Educator", "Other"
+];
+const TYPES = ["course", "book", "paper", "tutorial", "tool", "video", "community", "other"];
+const TYPE_ICONS = { course:"🎓", book:"📖", paper:"📄", tutorial:"📓", tool:"🛠️", video:"🎬", community:"👥", other:"🔗" };
+const CATEGORIES = [
+  "Machine learning", "Applied statistics", "Programming", "Maths foundations",
+  "Optimisation", "Information theory", "Graph theory", "Computer vision",
+  "Signal processing", "Data visualization", "Fellowship workshops",
+  "Institutional resources", "Other"
+];
+
+/* Related-field groups: same-group votes get a partial affinity boost */
+const FIELD_GROUPS = [
+  ["Physical sciences", "Chemistry & materials", "Earth & environment", "Engineering"],
+  ["Life sciences", "Medicine & health"],
+  ["Maths & statistics", "Computer science"],
+  ["Social sciences", "Arts & humanities"]
+];
+
+/* Weighting: how much a vote counts toward YOUR ranking */
+const W_BASE = 1.0, W_SAME_FIELD = 1.0, W_RELATED_FIELD = 0.4, W_SAME_STAGE = 0.5;
+
+/* ---------- Seed data (demo mode only; live mode reads the DB) ---------- */
+const SEED_RESOURCES = window.SEED_RESOURCES || [];
+
+/* ---------- State ---------- */
+const LS = {
+  get persona() { try { return JSON.parse(localStorage.getItem("aisci_persona")); } catch { return null; } },
+  set persona(v) { localStorage.setItem("aisci_persona", JSON.stringify(v)); },
+  get voterId() {
+    let id = localStorage.getItem("aisci_voter");
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem("aisci_voter", id); }
+    return id;
+  },
+  get demoVotes() { try { return JSON.parse(localStorage.getItem("aisci_demo_votes")) || {}; } catch { return {}; } },
+  set demoVotes(v) { localStorage.setItem("aisci_demo_votes", JSON.stringify(v)); },
+  get demoSuggestions() { try { return JSON.parse(localStorage.getItem("aisci_demo_sugg")) || []; } catch { return []; } },
+  set demoSuggestions(v) { localStorage.setItem("aisci_demo_sugg", JSON.stringify(v)); }
+};
+
+const LIVE = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
+if (SUPABASE_URL && !window.supabase) console.warn("Supabase library failed to load from CDN — running in demo mode.");
+const sb = LIVE ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+let resources = [];          // [{id,title,url,description,rtype,disciplines,level,suggested_by,created_at}]
+let voteAgg = {};            // resourceId -> [{voter_field, voter_stage, n}]
+let myVotes = new Set();     // resourceIds this voter has upvoted
+let sortMode = "foryou";
+let filters = { q: "", disc: "", type: "", level: "", cat: "" };
+let session = null;          // Supabase auth session (live mode)
+let profile = null;          // {field, stage, display_name} from the profiles table
+
+/* The active academic background: the signed-in profile in live
+   mode, or the locally-stored one in demo mode. */
+function curPersona() { return LIVE ? profile : LS.persona; }
+
+/* ---------- Helpers ---------- */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2600);
+}
+function sameGroup(a, b) {
+  if (!a || !b) return false;
+  return FIELD_GROUPS.some(g => g.includes(a) && g.includes(b));
+}
+function voteWeight(vf, vs, persona) {
+  if (!persona) return W_BASE;
+  let w = W_BASE;
+  if (vf === persona.field) w += W_SAME_FIELD;
+  else if (sameGroup(vf, persona.field)) w += W_RELATED_FIELD;
+  if (vs === persona.stage) w += W_SAME_STAGE;
+  return w;
+}
+function scores(r) {
+  const agg = voteAgg[r.id] || [];
+  const persona = curPersona();
+  let raw = 0, weighted = 0, fieldVotes = 0;
+  for (const a of agg) {
+    raw += a.n;
+    weighted += a.n * voteWeight(a.voter_field, a.voter_stage, persona);
+    if (persona && (a.voter_field === persona.field)) fieldVotes += a.n;
+  }
+  return { raw, weighted, fieldVotes };
+}
+
+/* ---------- Theme ---------- */
+function applyTheme(t) { document.documentElement.dataset.theme = t; localStorage.setItem("aisci_theme", t); }
+(function initTheme() {
+  const saved = localStorage.getItem("aisci_theme");
+  applyTheme(saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+})();
+$("#themeToggle").onclick = () =>
+  applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+
+/* ---------- Data loading ---------- */
+async function loadData() {
+  if (LIVE) {
+    const uid = session?.user?.id;
+    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }] = await Promise.all([
+      sb.from("resources").select("*").eq("approved", true).order("created_at", { ascending: true }),
+      sb.from("vote_counts").select("*"),
+      uid ? sb.from("votes").select("resource_id").eq("voter_id", uid) : Promise.resolve({ data: [] }),
+      uid ? sb.from("profiles").select("*").eq("id", uid).maybeSingle() : Promise.resolve({ data: null })
+    ]);
+    if (e1 || e2 || e3) { toast("Couldn't reach the database — check your Supabase config."); console.error(e1 || e2 || e3); return; }
+    resources = res || [];
+    profile = prof || null;
+    voteAgg = {};
+    (agg || []).forEach(a => (voteAgg[a.resource_id] ||= []).push(a));
+    myVotes = new Set((mine || []).map(v => v.resource_id));
+  } else {
+    $("#demoBanner").hidden = false;
+    resources = [...SEED_RESOURCES, ...LS.demoSuggestions];
+    voteAgg = {};
+    resources.forEach(r => { if (r.demoVotes) voteAgg[r.id] = r.demoVotes.map(v => ({ ...v })); });
+    const dv = LS.demoVotes;
+    myVotes = new Set(Object.keys(dv).filter(k => dv[k]));
+    // fold my demo votes into the aggregate
+    const p = LS.persona || { field: "Other", stage: "Other" };
+    for (const rid of myVotes) {
+      (voteAgg[rid] ||= []).push({ voter_field: p.field, voter_stage: p.stage, n: 1 });
+    }
+  }
+}
+
+/* ---------- Auth (live mode) ---------- */
+function openAuth() { $("#authOverlay").classList.add("open"); }
+async function signIn(provider) {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: location.origin + location.pathname }
+  });
+  if (error) { toast("Sign-in failed — try again."); console.error(error); }
+}
+async function signOut() {
+  await sb.auth.signOut();
+  session = null; profile = null;
+  await loadData(); render(); renderAuthArea(); refreshPersonaBar();
+  toast("Signed out");
+}
+function displayName() {
+  return profile?.display_name
+    || session?.user?.user_metadata?.full_name
+    || session?.user?.user_metadata?.name
+    || session?.user?.email?.split("@")[0] || "You";
+}
+function renderAuthArea() {
+  const area = $("#authArea");
+  if (!LIVE) { area.innerHTML = ""; return; }
+  if (session) {
+    const av = session.user.user_metadata?.avatar_url;
+    area.innerHTML = `<span class="userchip">
+      ${av ? `<img src="${esc(av)}" alt="">` : ""}
+      <span>${esc(displayName())}</span>
+      <button class="out" id="signOutBtn">Sign out</button>
+    </span>`;
+    $("#signOutBtn").onclick = signOut;
+  } else {
+    area.innerHTML = `<button class="btn" id="signInBtn">Sign in</button>`;
+    $("#signInBtn").onclick = openAuth;
+  }
+}
+
+/* Gate an action behind sign-in + completed profile (live mode). */
+function requireIdentity() {
+  if (LIVE && !session) { openAuth(); return false; }
+  if (!curPersona()) {
+    openPersona();
+    toast("Tell us your background first — it's what powers the recommendations.");
+    return false;
+  }
+  return true;
+}
+
+/* ---------- Voting ---------- */
+async function toggleVote(r) {
+  const had = myVotes.has(r.id);
+  if (!requireIdentity()) return;
+  const persona = curPersona();
+  if (LIVE) {
+    if (had) {
+      const { error } = await sb.from("votes").delete().eq("resource_id", r.id).eq("voter_id", session.user.id);
+      if (error) { toast("Couldn't remove vote."); console.error(error); return; }
+    } else {
+      const { error } = await sb.from("votes").insert({
+        resource_id: r.id, voter_id: session.user.id,
+        voter_field: persona.field, voter_stage: persona.stage
+      });
+      if (error) { toast("Couldn't save vote."); console.error(error); return; }
+    }
+    await loadData();
+  } else {
+    const dv = LS.demoVotes; dv[r.id] = !had; LS.demoVotes = dv;
+    await loadData();
+  }
+  render();
+  toast(had ? "Vote removed" : "Upvoted ▲");
+}
+
+/* ---------- Suggesting ---------- */
+async function submitSuggestion() {
+  const title = $("#sTitle").value.trim();
+  const desc = $("#sDesc").value.trim();
+  if (!title || !desc) { toast("Please add a title and a short description."); return; }
+  let url = $("#sUrl").value.trim();
+  if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+  const rec = {
+    title, url: url || null, description: desc,
+    rtype: $("#sType").value,
+    category: $("#sCat").value || null,
+    disciplines: $$("#sDiscChips .chip.active").map(c => c.dataset.v),
+    level: $("#sLevel").value,
+    suggested_by: $("#sName").value.trim() || (LIVE ? displayName() : null)
+  };
+  if (LIVE) {
+    rec.suggester_id = session.user.id;
+    const { error } = await sb.from("resources").insert(rec);
+    if (error) { toast("Couldn't submit — try again."); console.error(error); return; }
+    await loadData();
+  } else {
+    rec.id = "local-" + crypto.randomUUID();
+    rec.created_at = new Date().toISOString();
+    LS.demoSuggestions = [...LS.demoSuggestions, rec];
+    await loadData();
+  }
+  closeOverlay("#suggestOverlay");
+  ["#sTitle", "#sUrl", "#sDesc", "#sName"].forEach(s => $(s).value = "");
+  $$("#sDiscChips .chip.active").forEach(c => c.classList.remove("active"));
+  render();
+  toast("Thanks! Your suggestion is live 🎉");
+}
+
+/* ---------- Persona / profile ---------- */
+function openPersona() {
+  if (LIVE && !session) { openAuth(); return; }
+  const p = curPersona();
+  $$("#fieldChips .chip").forEach(c => c.classList.toggle("active", p?.field === c.dataset.v));
+  $$("#stageChips .chip").forEach(c => c.classList.toggle("active", p?.stage === c.dataset.v));
+  $("#personaOverlay").classList.add("open");
+}
+async function savePersona() {
+  const field = $("#fieldChips .chip.active")?.dataset.v;
+  const stage = $("#stageChips .chip.active")?.dataset.v;
+  if (!field || !stage) { toast("Pick one field and one stage (or skip)."); return; }
+  if (LIVE) {
+    const rec = { id: session.user.id, field, stage, display_name: displayName() };
+    const { error } = await sb.from("profiles").upsert(rec);
+    if (error) { toast("Couldn't save your profile — try again."); console.error(error); return; }
+    profile = rec;
+  } else {
+    LS.persona = { field, stage };
+  }
+  closeOverlay("#personaOverlay");
+  refreshPersonaBar();
+  loadData().then(render);
+}
+function refreshPersonaBar() {
+  const p = curPersona();
+  $("#personaBar").hidden = !p;
+  if (p) $("#personaText").innerHTML = `Ranking for a <b>${esc(p.stage)}</b> in <b>${esc(p.field)}</b>`;
+}
+function closeOverlay(sel) { $(sel).classList.remove("open"); }
+
+/* ---------- Rendering ---------- */
+function render() {
+  const persona = curPersona();
+  let list = resources.filter(r => {
+    if (filters.q && !(r.title + " " + (r.description || "") + " " + (r.category || "")).toLowerCase().includes(filters.q)) return false;
+    // empty disciplines = relevant to all fields, so it matches any discipline filter
+    if (filters.disc && (r.disciplines || []).length && !r.disciplines.includes(filters.disc)) return false;
+    if (filters.cat && r.category !== filters.cat) return false;
+    if (filters.type && r.rtype !== filters.type) return false;
+    if (filters.level && r.level !== filters.level && r.level !== "any") return false;
+    return true;
+  });
+  const scored = list.map(r => ({ r, s: scores(r) }));
+  if (sortMode === "top") scored.sort((a, b) => b.s.raw - a.s.raw);
+  else if (sortMode === "new") scored.sort((a, b) => new Date(b.r.created_at || 0) - new Date(a.r.created_at || 0));
+  else scored.sort((a, b) => b.s.weighted - a.s.weighted);
+
+  const grid = $("#resourceGrid");
+  if (!scored.length) {
+    grid.innerHTML = `<div class="empty">Nothing matches those filters yet.<br>Be the first — <b>suggest a resource</b> above!</div>`;
+  } else {
+    grid.innerHTML = scored.map(({ r, s }, i) => {
+      const voted = myVotes.has(r.id);
+      const matchTag = persona && sortMode === "foryou" && s.fieldVotes > 0
+        ? `<span class="tag match">★ ${s.fieldVotes} vote${s.fieldVotes > 1 ? "s" : ""} from ${esc(persona.field)}</span>` : "";
+      const titleHtml = r.url
+        ? `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.title)} ↗</a>`
+        : esc(r.title);
+      return `<div class="card" style="animation-delay:${Math.min(i * 35, 350)}ms">
+        <div class="vote">
+          <button aria-label="Upvote ${esc(r.title)}" aria-pressed="${voted}" class="${voted ? "voted" : ""}" data-vote="${esc(r.id)}">▲</button>
+          <span class="count">${s.raw}</span><span class="lbl">votes</span>
+        </div>
+        <div>
+          <h3>${TYPE_ICONS[r.rtype] || "🔗"} ${titleHtml}</h3>
+          <p class="desc">${esc(r.description || "")}</p>
+          <div class="meta">
+            <span class="tag type">${esc(r.rtype)}</span>
+            ${r.category ? `<span class="tag cat">${esc(r.category)}</span>` : ""}
+            ${r.level && r.level !== "any" ? `<span class="tag level">${esc(r.level)}</span>` : ""}
+            ${(r.disciplines || []).map(d => `<span class="tag">${esc(d)}</span>`).join("")}
+            ${matchTag}
+            ${r.suggested_by ? `<span class="tag">by ${esc(r.suggested_by)}</span>` : ""}
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+  }
+  $$("#resourceGrid [data-vote]").forEach(b => {
+    b.onclick = () => { const r = resources.find(x => String(x.id) === b.dataset.vote); if (r) toggleVote(r); };
+  });
+
+  // stats
+  const totalVotes = Object.values(voteAgg).flat().reduce((t, a) => t + a.n, 0);
+  const fields = new Set(Object.values(voteAgg).flat().map(a => a.voter_field));
+  $("#statsRow").innerHTML = `
+    <div class="stat"><div class="num">${resources.length}</div><div class="cap">resources</div></div>
+    <div class="stat"><div class="num">${totalVotes}</div><div class="cap">votes cast</div></div>
+    <div class="stat"><div class="num">${fields.size}</div><div class="cap">disciplines voting</div></div>`;
+  $("#footerNote").textContent = LIVE ? "Live · votes shared with everyone" : "Demo mode · votes stay in this browser";
+}
+
+/* ---------- Wiring ---------- */
+function chipRow(sel, values, single) {
+  $(sel).innerHTML = values.map(v => `<button type="button" class="chip" data-v="${esc(v)}">${esc(v)}</button>`).join("");
+  $$(sel + " .chip").forEach(c => c.onclick = () => {
+    if (single) $$(sel + " .chip").forEach(x => x.classList.remove("active"));
+    c.classList.toggle("active");
+  });
+}
+chipRow("#fieldChips", FIELDS, true);
+chipRow("#stageChips", STAGES, true);
+chipRow("#sDiscChips", FIELDS.filter(f => f !== "Other"), false);
+$("#sType").innerHTML = TYPES.map(t => `<option value="${t}">${TYPE_ICONS[t]} ${t[0].toUpperCase() + t.slice(1)}</option>`).join("");
+$("#sCat").innerHTML = CATEGORIES.map(c => `<option>${esc(c)}</option>`).join("");
+$("#filterCategory").innerHTML += CATEGORIES.map(c => `<option>${esc(c)}</option>`).join("");
+$("#filterDiscipline").innerHTML += FIELDS.map(f => `<option>${esc(f)}</option>`).join("");
+$("#filterType").innerHTML += TYPES.map(t => `<option value="${t}">${t[0].toUpperCase() + t.slice(1)}</option>`).join("");
+
+$("#searchBox").oninput = e => { filters.q = e.target.value.toLowerCase(); render(); };
+$("#filterCategory").onchange = e => { filters.cat = e.target.value; render(); };
+$("#filterDiscipline").onchange = e => { filters.disc = e.target.value; render(); };
+$("#filterType").onchange = e => { filters.type = e.target.value; render(); };
+$("#filterLevel").onchange = e => { filters.level = e.target.value; render(); };
+$$(".tab").forEach(t => t.onclick = () => {
+  $$(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active"); sortMode = t.dataset.sort; render();
+});
+$("#suggestBtn").onclick = () => { if (requireIdentity()) $("#suggestOverlay").classList.add("open"); };
+$("#ghLogin").onclick = () => signIn("github");
+$("#ggLogin").onclick = () => signIn("google");
+$("#cancelAuth").onclick = () => closeOverlay("#authOverlay");
+$("#cancelSuggest").onclick = () => closeOverlay("#suggestOverlay");
+$("#submitSuggest").onclick = submitSuggestion;
+$("#editPersona").onclick = openPersona;
+$("#savePersona").onclick = savePersona;
+$("#skipPersona").onclick = () => closeOverlay("#personaOverlay");
+$$(".overlay").forEach(o => o.addEventListener("click", e => { if (e.target === o) o.classList.remove("open"); }));
+document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay.open").forEach(o => o.classList.remove("open")); });
+
+/* ---------- Boot ---------- */
+(async function boot() {
+  if (LIVE) {
+    ({ data: { session } } = await sb.auth.getSession());
+    sb.auth.onAuthStateChange((_event, s) => {
+      // defer: awaiting supabase calls directly inside this callback can deadlock
+      setTimeout(async () => {
+        const wasSignedOut = !session;
+        session = s;
+        await loadData();
+        render(); renderAuthArea(); refreshPersonaBar();
+        // First sign-in with no profile yet → collect academic background
+        if (session && !profile && wasSignedOut) setTimeout(openPersona, 400);
+      }, 0);
+    });
+  }
+  await loadData();
+  renderAuthArea();
+  refreshPersonaBar();
+  render();
+  if (LIVE && session && !profile) setTimeout(openPersona, 600);
+  if (!LIVE && !LS.persona) setTimeout(openPersona, 600);
+})();
+</script>
+</body>
+</html>
