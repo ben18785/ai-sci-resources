@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI in Science — Community Learning Resources</title>
 <meta name="description" content="Vote for the best resources for learning about AI in science, personalised to your academic background.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%234a9df0' stroke-width='3.5'%3E%3Cellipse cx='32' cy='32' rx='26' ry='11'/%3E%3Cellipse cx='32' cy='32' rx='26' ry='11' transform='rotate(60 32 32)'/%3E%3Cellipse cx='32' cy='32' rx='26' ry='11' transform='rotate(120 32 32)'/%3E%3C/g%3E%3Ccircle cx='32' cy='32' r='6' fill='%23eb6834'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:title" content="AI in Science — community learning resources">
+<meta property="og:description" content="Upvote the courses, papers, books and tools that helped you most — ranked for your academic background.">
+<meta property="og:image" content="https://ben18785.github.io/ai-sci-resources/og-image.png">
+<meta property="og:url" content="https://ben18785.github.io/ai-sci-resources/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 /* ============================================================
@@ -65,6 +76,10 @@ body {
   transition: background .25s ease, color .25s ease;
 }
 
+h1, h2, h3, .brand, .stat .num, .tab, .btn.primary {
+  font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
 /* ---------- Hero ---------- */
 .hero {
   position: relative;
@@ -75,6 +90,11 @@ body {
     var(--page);
   border-bottom: 1px solid var(--hairline);
 }
+#constellation {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none;
+}
+.topbar, .hero-inner { position: relative; z-index: 1; }
 .hero-inner {
   max-width: 1080px; margin: 0 auto;
   padding: 56px 24px 40px;
@@ -149,6 +169,7 @@ a.btn { text-decoration: none; }
 }
 .persona b { color: var(--ink); }
 .persona .edit { font-size: .8rem; padding: 5px 12px; }
+.persona[hidden], [hidden] { display: none !important; }
 .userchip {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--surface); border: 1px solid var(--border);
@@ -207,6 +228,17 @@ select.ctl {
   animation: rise .35s ease both;
 }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.card { cursor: pointer; }
+.card::before {
+  content: ""; position: absolute; inset: -1px; border-radius: var(--radius);
+  padding: 1.5px;
+  background: linear-gradient(120deg, var(--accent), var(--violet), var(--accent));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0; transition: opacity .2s ease; pointer-events: none;
+}
+.card { position: relative; }
+.card:hover::before { opacity: .75; }
 .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .vote {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -321,6 +353,26 @@ select.ctl {
 }
 .field textarea { resize: vertical; min-height: 70px; }
 .modal .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 26px; }
+.modal.wide { width: min(680px, 100%); }
+.detail-head { display: flex; gap: 14px; align-items: flex-start; }
+.detail-head .vote { flex: none; }
+.detail-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.act-section { margin-top: 20px; }
+.act-section h3 { font-size: .95rem; margin-bottom: 8px; }
+.act-item {
+  display: block; width: 100%; text-align: left; font-family: inherit;
+  background: var(--surface-2); border: 1px solid var(--hairline);
+  border-radius: 10px; padding: 9px 13px; margin: 6px 0; cursor: pointer;
+  color: var(--ink); font-size: .89rem; transition: border-color .15s;
+}
+.act-item:hover { border-color: var(--accent); }
+.act-item .sub { display: block; color: var(--muted); font-size: .78rem; margin-top: 2px; }
+.act-none { color: var(--muted); font-size: .86rem; }
+.mod-btn {
+  border: none; background: none; cursor: pointer; font-family: inherit;
+  font-size: .74rem; font-weight: 650; color: var(--warm); padding: 3px 6px;
+}
+.mod-btn:hover { text-decoration: underline; }
 
 /* ---------- Toast & misc ---------- */
 .toast {
@@ -337,9 +389,35 @@ select.ctl {
   color: var(--ink); border-radius: 12px; padding: 10px 16px;
   font-size: .88rem; margin-bottom: 18px;
 }
-.stats-row { display: flex; gap: 26px; margin-top: 26px; flex-wrap: wrap; }
+.stats-row { display: flex; gap: 26px; margin-top: 26px; flex-wrap: wrap; align-items: flex-start; }
 .stat .num { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; }
 .stat .cap { font-size: .8rem; color: var(--muted); font-weight: 600; }
+.usage-line { margin-top: 14px; font-size: .8rem; color: var(--muted); }
+.usage-line b { color: var(--ink-2); font-weight: 700; }
+
+/* ---------- Votes-by-discipline mini chart ---------- */
+.field-chart { margin-left: auto; min-width: 250px; max-width: 330px; flex: 1; }
+.field-chart .fc-title { font-size: .74rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.fc-row { display: grid; grid-template-columns: 112px 1fr auto; gap: 8px; align-items: center; margin: 3px 0; }
+.fc-row .fc-label { font-size: .76rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-row .fc-bar { height: 8px; border-radius: 0 4px 4px 0; background: var(--accent); min-width: 2px; }
+.fc-row .fc-n { font-size: .74rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) { .field-chart { margin-left: 0; } }
+
+/* ---------- Skeleton shimmer ---------- */
+.skel {
+  height: 118px; border-radius: var(--radius);
+  background: linear-gradient(100deg, var(--surface) 40%, var(--surface-2) 50%, var(--surface) 60%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s linear infinite;
+  border: 1px solid var(--border);
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ---------- Vote burst ---------- */
+.burst-dot { position: fixed; width: 7px; height: 7px; border-radius: 50%; pointer-events: none; z-index: 80; }
+@keyframes countPop { 0% { transform: scale(1); } 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
+.count.pop { animation: countPop .45s ease; }
 footer { border-top: 1px solid var(--hairline); color: var(--muted); font-size: .84rem; }
 footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 @media (max-width: 640px) {
@@ -352,6 +430,7 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
 <body>
 
 <div class="hero">
+  <canvas id="constellation" aria-hidden="true"></canvas>
   <div class="topbar">
     <div class="brand"><span class="brand-mark">⚛</span> AI in Science</div>
     <div class="top-actions">
@@ -371,9 +450,17 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
       <div class="persona" id="personaBar" hidden>
         <span id="personaText"></span>
         <button class="btn edit" id="editPersona">Change</button>
+        <button class="btn edit" id="activityBtnDemo">My activity</button>
       </div>
     </div>
-    <div class="stats-row" id="statsRow"></div>
+    <div class="stats-row">
+      <div style="display:flex;gap:26px;flex-wrap:wrap" id="statsRow"></div>
+      <div class="field-chart" id="fieldChart" hidden>
+        <div class="fc-title">Votes by discipline</div>
+        <div id="fieldChartRows"></div>
+      </div>
+    </div>
+    <div class="usage-line" id="usageLine"></div>
   </div>
 </div>
 
@@ -397,6 +484,7 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
 
   <div class="tabs" role="tablist">
     <button class="tab active" data-sort="foryou" role="tab">✨ For you</button>
+    <button class="tab" data-sort="trending" role="tab">🔥 Trending</button>
     <button class="tab" data-sort="top" role="tab">▲ Most upvoted</button>
     <button class="tab" data-sort="new" role="tab">🕐 Newest</button>
   </div>
@@ -459,6 +547,20 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
       <button class="btn ghost" id="cancelSuggest">Cancel</button>
       <button class="btn primary" id="submitSuggest">Submit</button>
     </div>
+  </div>
+</div>
+
+<!-- Resource detail modal -->
+<div class="overlay" id="detailOverlay">
+  <div class="modal wide" role="dialog" aria-modal="true" id="detailModal"></div>
+</div>
+
+<!-- My activity modal -->
+<div class="overlay" id="activityOverlay">
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="activityTitle">
+    <h2 id="activityTitle">My activity</h2>
+    <div id="activityBody"></div>
+    <div class="actions"><button class="btn ghost" id="closeActivity">Close</button></div>
   </div>
 </div>
 
@@ -564,6 +666,9 @@ let openComments = new Set();// resource ids with expanded comment sections
 let cmtDrafts = {};          // resourceId -> unsent composer text (survives re-renders)
 let cmtVotes = {};           // commentId (string) -> upvote total
 let myCmtVotes = new Set();  // commentIds (string) this user has upvoted
+let voteAgg30 = {};          // resourceId -> votes in the last 30 days (trending)
+let isAdmin = false;         // current user is a moderator
+let currentDetail = null;    // resource id open in the detail modal
 
 /* The active academic background: the signed-in profile in live
    mode, or the locally-stored one in demo mode. */
@@ -616,14 +721,16 @@ $("#themeToggle").onclick = () =>
 async function loadData() {
   if (LIVE) {
     const uid = session?.user?.id;
-    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }, { data: cmts }, { data: cvc }, { data: mycv }] = await Promise.all([
+    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }, { data: cmts }, { data: cvc }, { data: mycv }, { data: v30 }, { data: adm }] = await Promise.all([
       sb.from("resources").select("*").eq("approved", true).order("created_at", { ascending: true }),
       sb.from("vote_counts").select("*"),
       uid ? sb.from("votes").select("resource_id").eq("voter_id", uid) : Promise.resolve({ data: [] }),
       uid ? sb.from("profiles").select("*").eq("id", uid).maybeSingle() : Promise.resolve({ data: null }),
       sb.from("comments").select("*").order("created_at", { ascending: true }),
       sb.from("comment_vote_counts").select("*"),
-      uid ? sb.from("comment_votes").select("comment_id").eq("voter_id", uid) : Promise.resolve({ data: [] })
+      uid ? sb.from("comment_votes").select("comment_id").eq("voter_id", uid) : Promise.resolve({ data: [] }),
+      sb.from("vote_counts_30d").select("*"),
+      uid ? sb.from("admins").select("user_id").eq("user_id", uid).maybeSingle() : Promise.resolve({ data: null })
     ]);
     if (e1 || e2 || e3) { toast("Couldn't reach the database — check your Supabase config."); console.error(e1 || e2 || e3); return; }
     resources = res || [];
@@ -636,6 +743,9 @@ async function loadData() {
     cmtVotes = {};
     (cvc || []).forEach(v => cmtVotes[String(v.comment_id)] = v.n);
     myCmtVotes = new Set((mycv || []).map(v => String(v.comment_id)));
+    voteAgg30 = {};
+    (v30 || []).forEach(v => voteAgg30[v.resource_id] = v.n);
+    isAdmin = Boolean(adm);
   } else {
     $("#demoBanner").hidden = false;
     resources = [...SEED_RESOURCES, ...LS.demoSuggestions];
@@ -649,6 +759,9 @@ async function loadData() {
     myCmtVotes = new Set(Object.keys(dcv).filter(k => dcv[k]));
     cmtVotes = {};
     myCmtVotes.forEach(k => cmtVotes[k] = 1);
+    voteAgg30 = {};
+    for (const [rid, agg] of Object.entries(voteAgg)) voteAgg30[rid] = agg.reduce((t, a) => t + a.n, 0);
+    isAdmin = false;
     // fold my demo votes into the aggregate
     const p = LS.persona || { field: "Other", stage: "Other" };
     for (const rid of myVotes) {
@@ -685,10 +798,12 @@ function renderAuthArea() {
     const av = session.user.user_metadata?.avatar_url;
     area.innerHTML = `<span class="userchip">
       ${av ? `<img src="${esc(av)}" alt="">` : ""}
-      <span>${esc(displayName())}</span>
+      <span>${esc(displayName())}${isAdmin ? " 🛡" : ""}</span>
+      <button class="out" id="activityBtn">My activity</button>
       <button class="out" id="signOutBtn">Sign out</button>
     </span>`;
     $("#signOutBtn").onclick = signOut;
+    $("#activityBtn").onclick = openActivity;
   } else {
     area.innerHTML = `<button class="btn" id="signInBtn">Sign in</button>`;
     $("#signInBtn").onclick = openAuth;
@@ -732,9 +847,9 @@ async function toggleVote(r) {
 }
 
 /* ---------- Comments ---------- */
-async function postComment(r) {
+async function postComment(r, rootSel = "#resourceGrid") {
   if (!requireIdentity()) return;
-  const box = $(`#cmtIn-${CSS.escape(String(r.id))}`);
+  const box = $(`${rootSel} #cmtIn-${CSS.escape(String(r.id))}`);
   const body = (box?.value || "").trim();
   if (!body) { toast("Write a comment first."); return; }
   if (LIVE) {
@@ -813,7 +928,7 @@ function commentsHtml(r) {
           <span class="when">${esc(fmtWhen(c.created_at))}</span>
           <button class="cmt-up ${voted ? "voted" : ""}" data-cmtvote="${esc(String(c.id))}"
             aria-pressed="${voted}" title="${voted ? "Remove upvote" : "Upvote this comment"}">▲${n ? " " + n : ""}</button>
-          ${isMyComment(c) ? `<button class="del" data-delcmt="${esc(String(c.id))}" data-res="${esc(String(r.id))}">delete</button>` : ""}
+          ${(isMyComment(c) || isAdmin) ? `<button class="del" data-delcmt="${esc(String(c.id))}" data-res="${esc(String(r.id))}">${isMyComment(c) ? "delete" : "🛡 delete"}</button>` : ""}
         </div>
         <div class="body">${esc(c.body)}</div>
       </div>`;
@@ -826,6 +941,177 @@ function commentsHtml(r) {
          </div>`
       : `<div class="cmt-signin"><a data-cmtsignin>Sign in</a> to join the discussion.</div>`}
   </div>`;
+}
+
+/* ---------- Shared handler wiring (grid + detail modal) ---------- */
+function bindListHandlers(rootSel) {
+  $$(rootSel + " [data-vote]").forEach(b => {
+    b.onclick = () => {
+      const r = resources.find(x => String(x.id) === b.dataset.vote);
+      if (!r) return;
+      const canCelebrate = !myVotes.has(r.id) && curPersona() && (!LIVE || session);
+      if (canCelebrate) burst(b);
+      toggleVote(r);
+    };
+  });
+  $$(rootSel + " [data-postcmt]").forEach(b => {
+    b.onclick = () => { const r = resources.find(x => String(x.id) === b.dataset.postcmt); if (r) postComment(r, rootSel); };
+  });
+  $$(rootSel + " [data-delcmt]").forEach(b => {
+    b.onclick = () => {
+      const r = resources.find(x => String(x.id) === b.dataset.res);
+      if (r && confirm("Delete this comment?")) deleteComment(r, b.dataset.delcmt);
+    };
+  });
+  $$(rootSel + " textarea[id^='cmtIn-']").forEach(t => {
+    t.oninput = () => { cmtDrafts[t.id.slice(6)] = t.value; };
+  });
+  $$(rootSel + " [data-cmtsignin]").forEach(a => a.onclick = openAuth);
+  $$(rootSel + " [data-cmtvote]").forEach(b => {
+    b.onclick = () => toggleCmtVote(b.dataset.cmtvote);
+  });
+  $$(rootSel + " [data-modres]").forEach(b => {
+    b.onclick = async () => {
+      const r = resources.find(x => String(x.id) === b.dataset.modres);
+      if (!r || !confirm(`Remove "${r.title}" and all its votes and comments?`)) return;
+      const { error } = await sb.from("resources").delete().eq("id", r.id);
+      if (error) { toast("Couldn't remove resource."); console.error(error); return; }
+      if (currentDetail === r.id) closeDetail();
+      await loadData(); render();
+      toast("Resource removed 🛡");
+    };
+  });
+}
+
+/* ---------- Vote micro-celebration ---------- */
+function burst(el) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+  const colors = ["#3987e5", "#9085e9", "#eb6834", "#eda100", "#1baf7a"];
+  for (let i = 0; i < 14; i++) {
+    const d = document.createElement("span");
+    d.className = "burst-dot";
+    d.style.left = cx + "px"; d.style.top = cy + "px";
+    d.style.background = colors[i % colors.length];
+    document.body.appendChild(d);
+    const ang = (i / 14) * Math.PI * 2 + Math.random() * .5;
+    const dist = 34 + Math.random() * 30;
+    d.animate([
+      { transform: "translate(-50%,-50%) scale(1)", opacity: 1 },
+      { transform: `translate(${Math.cos(ang) * dist - 50 / 7}px, ${Math.sin(ang) * dist - 50 / 7}px) scale(.2)`, opacity: 0 }
+    ], { duration: 550 + Math.random() * 200, easing: "cubic-bezier(.1,.7,.4,1)" }).onfinish = () => d.remove();
+  }
+  const count = el.parentElement?.querySelector(".count");
+  if (count) { count.classList.remove("pop"); void count.offsetWidth; count.classList.add("pop"); }
+}
+
+/* ---------- Detail view ---------- */
+function openDetail(rid) {
+  currentDetail = rid;
+  history.replaceState(null, "", "#r=" + encodeURIComponent(rid));
+  renderDetail();
+  $("#detailOverlay").classList.add("open");
+}
+function closeDetail() {
+  currentDetail = null;
+  history.replaceState(null, "", location.pathname + location.search);
+  $("#detailOverlay").classList.remove("open");
+}
+function renderDetail() {
+  const r = resources.find(x => String(x.id) === String(currentDetail));
+  if (!r) { closeDetail(); return; }
+  const s = scores(r);
+  const voted = myVotes.has(r.id);
+  $("#detailModal").innerHTML = `
+    <div class="detail-head">
+      <div class="vote">
+        <button aria-label="Upvote" aria-pressed="${voted}" class="${voted ? "voted" : ""}" data-vote="${esc(String(r.id))}">▲</button>
+        <span class="count">${s.raw}</span><span class="lbl">votes</span>
+      </div>
+      <div>
+        <h2>${TYPE_ICONS[r.rtype] || "🔗"} ${esc(r.title)}</h2>
+        <div class="meta" style="margin-top:8px">
+          <span class="tag type">${esc(r.rtype)}</span>
+          ${r.category ? `<span class="tag cat">${esc(r.category)}</span>` : ""}
+          ${r.level && r.level !== "any" ? `<span class="tag level">${esc(r.level)}</span>` : ""}
+          ${(r.disciplines || []).map(d => `<span class="tag">${esc(d)}</span>`).join("")}
+          ${r.suggested_by ? `<span class="tag">by ${esc(r.suggested_by)}</span>` : ""}
+        </div>
+        <p class="desc" style="margin-top:10px;color:var(--ink-2)">${esc(r.description || "")}</p>
+        <div class="detail-actions">
+          ${r.url ? `<a class="btn primary" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">Open resource ↗</a>` : ""}
+          <button class="btn" id="copyLink">🔗 Copy link</button>
+          ${isAdmin ? `<button class="btn" data-modres="${esc(String(r.id))}">🛡 Remove</button>` : ""}
+        </div>
+      </div>
+    </div>
+    ${commentsHtml(r)}
+    <div class="actions"><button class="btn ghost" id="closeDetailBtn">Close</button></div>`;
+  bindListHandlers("#detailModal");
+  $("#closeDetailBtn").onclick = closeDetail;
+  $("#copyLink").onclick = async () => {
+    const link = location.origin + location.pathname + "#r=" + encodeURIComponent(r.id);
+    try { await navigator.clipboard.writeText(link); toast("Link copied 🔗"); }
+    catch { prompt("Copy this link:", link); }
+  };
+}
+
+/* ---------- My activity ---------- */
+function openActivity() {
+  const uid = session?.user?.id;
+  const upvoted = resources.filter(r => myVotes.has(r.id));
+  const mine = LIVE
+    ? resources.filter(r => uid && r.suggester_id === uid)
+    : resources.filter(r => String(r.id).startsWith("local-"));
+  const myCmts = [];
+  for (const [rid, cs] of Object.entries(comments))
+    for (const c of cs) if (isMyComment(c)) myCmts.push({ c, rid });
+  const item = (rid, label, sub) => `
+    <button class="act-item" data-actgo="${esc(String(rid))}">${label}${sub ? `<span class="sub">${sub}</span>` : ""}</button>`;
+  const titleOf = rid => esc(resources.find(x => String(x.id) === String(rid))?.title || "(removed resource)");
+  $("#activityBody").innerHTML = `
+    <div class="act-section"><h3>▲ Upvoted (${upvoted.length})</h3>
+      ${upvoted.length ? upvoted.map(r => item(r.id, esc(r.title))).join("") : `<div class="act-none">Nothing upvoted yet.</div>`}</div>
+    <div class="act-section"><h3>💬 My comments (${myCmts.length})</h3>
+      ${myCmts.length ? myCmts.map(({ c, rid }) => item(rid, `“${esc(c.body.length > 90 ? c.body.slice(0, 90) + "…" : c.body)}”`, `on ${titleOf(rid)} · ${esc(fmtWhen(c.created_at))}`)).join("") : `<div class="act-none">No comments yet.</div>`}</div>
+    <div class="act-section"><h3>➕ My suggestions (${mine.length})</h3>
+      ${mine.length ? mine.map(r => item(r.id, esc(r.title), `${(voteAgg[r.id] || []).reduce((t, a) => t + a.n, 0)} votes`)).join("") : `<div class="act-none">No suggestions yet — add one!</div>`}</div>`;
+  $$("#activityBody [data-actgo]").forEach(b => b.onclick = () => {
+    closeOverlay("#activityOverlay");
+    openDetail(b.dataset.actgo);
+  });
+  $("#activityOverlay").classList.add("open");
+}
+
+/* ---------- Usage stats (privacy-friendly, first-party) ---------- */
+async function logVisit() {
+  if (!LIVE) return;
+  try {
+    if (sessionStorage.getItem("aisci_logged")) return;
+    let vid = localStorage.getItem("aisci_visitor");
+    if (!vid) { vid = crypto.randomUUID(); localStorage.setItem("aisci_visitor", vid); }
+    let country = null;
+    try {
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 2500);
+      const resp = await fetch("https://api.country.is/", { signal: ctrl.signal });
+      country = (await resp.json()).country || null;
+    } catch {}
+    await sb.from("pageviews").insert({ visitor_id: vid, session_id: crypto.randomUUID(), country });
+    sessionStorage.setItem("aisci_logged", "1");
+  } catch {}
+}
+async function loadStats() {
+  if (!LIVE) return;
+  try {
+    const { data } = await sb.from("site_stats").select("*").maybeSingle();
+    if (!data) return;
+    const f = n => (n || 0).toLocaleString();
+    $("#usageLine").innerHTML =
+      `Last 30 days: <b>${f(data.people_30d)}</b> ${data.people_30d === 1 ? "person" : "people"} · <b>${f(data.sessions_30d)}</b> sessions · <b>${f(data.countries_30d)}</b> ${data.countries_30d === 1 ? "country" : "countries"}
+       &nbsp;·&nbsp; Since launch: <b>${f(data.people_all)}</b> ${data.people_all === 1 ? "person" : "people"} · <b>${f(data.sessions_all)}</b> sessions · <b>${f(data.countries_all)}</b> ${data.countries_all === 1 ? "country" : "countries"}`;
+  } catch {}
 }
 
 /* ---------- Suggesting ---------- */
@@ -888,6 +1174,7 @@ async function savePersona() {
 function refreshPersonaBar() {
   const p = curPersona();
   $("#personaBar").hidden = !p;
+  $("#activityBtnDemo").hidden = LIVE;   // live mode has it in the user chip instead
   if (p) $("#personaText").innerHTML = `Ranking for a <b>${esc(p.stage)}</b> in <b>${esc(p.field)}</b>`;
 }
 function closeOverlay(sel) { $(sel).classList.remove("open"); }
@@ -907,6 +1194,8 @@ function render() {
   const scored = list.map(r => ({ r, s: scores(r) }));
   if (sortMode === "top") scored.sort((a, b) => b.s.raw - a.s.raw);
   else if (sortMode === "new") scored.sort((a, b) => new Date(b.r.created_at || 0) - new Date(a.r.created_at || 0));
+  else if (sortMode === "trending") scored.sort((a, b) =>
+    (voteAgg30[b.r.id] || 0) - (voteAgg30[a.r.id] || 0) || b.s.weighted - a.s.weighted);
   else scored.sort((a, b) => b.s.weighted - a.s.weighted);
 
   const grid = $("#resourceGrid");
@@ -920,7 +1209,7 @@ function render() {
       const titleHtml = r.url
         ? `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.title)} ↗</a>`
         : esc(r.title);
-      return `<div class="card" style="animation-delay:${Math.min(i * 35, 350)}ms">
+      return `<div class="card" data-rid="${esc(String(r.id))}" style="animation-delay:${Math.min(i * 35, 350)}ms" title="Click for details & discussion">
         <div class="vote">
           <button aria-label="Upvote ${esc(r.title)}" aria-pressed="${voted}" class="${voted ? "voted" : ""}" data-vote="${esc(r.id)}">▲</button>
           <span class="count">${s.raw}</span><span class="lbl">votes</span>
@@ -938,15 +1227,15 @@ function render() {
             <button class="chip cmt-toggle" data-cmt="${esc(String(r.id))}" aria-expanded="${openComments.has(r.id)}">
               💬 ${(comments[r.id] || []).length || ""} ${(comments[r.id] || []).length === 1 ? "comment" : "comments"}
             </button>
+            ${sortMode === "trending" && voteAgg30[r.id] ? `<span class="tag">🔥 ${voteAgg30[r.id]} this month</span>` : ""}
+            ${isAdmin ? `<button class="mod-btn" data-modres="${esc(String(r.id))}">🛡 remove</button>` : ""}
           </div>
         </div>
         ${openComments.has(r.id) ? commentsHtml(r) : ""}
       </div>`;
     }).join("");
   }
-  $$("#resourceGrid [data-vote]").forEach(b => {
-    b.onclick = () => { const r = resources.find(x => String(x.id) === b.dataset.vote); if (r) toggleVote(r); };
-  });
+  bindListHandlers("#resourceGrid");
   $$("#resourceGrid [data-cmt]").forEach(b => {
     b.onclick = () => {
       const id = b.dataset.cmt;
@@ -955,22 +1244,15 @@ function render() {
       render();
     };
   });
-  $$("#resourceGrid [data-postcmt]").forEach(b => {
-    b.onclick = () => { const r = resources.find(x => String(x.id) === b.dataset.postcmt); if (r) postComment(r); };
-  });
-  $$("#resourceGrid [data-delcmt]").forEach(b => {
-    b.onclick = () => {
-      const r = resources.find(x => String(x.id) === b.dataset.res);
-      if (r && confirm("Delete this comment?")) deleteComment(r, b.dataset.delcmt);
+  // click anywhere on a card (except its controls) opens the detail view
+  $$("#resourceGrid .card").forEach(c => {
+    c.onclick = e => {
+      if (e.target.closest("a, button, textarea, .cmts")) return;
+      const r = resources.find(x => String(x.id) === c.dataset.rid);
+      if (r) openDetail(r.id);
     };
   });
-  $$("#resourceGrid textarea[id^='cmtIn-']").forEach(t => {
-    t.oninput = () => { cmtDrafts[t.id.slice(6)] = t.value; };
-  });
-  $$("#resourceGrid [data-cmtsignin]").forEach(a => a.onclick = openAuth);
-  $$("#resourceGrid [data-cmtvote]").forEach(b => {
-    b.onclick = () => toggleCmtVote(b.dataset.cmtvote);
-  });
+  if (currentDetail) renderDetail();
 
   // stats
   const totalVotes = Object.values(voteAgg).flat().reduce((t, a) => t + a.n, 0);
@@ -979,6 +1261,21 @@ function render() {
     <div class="stat"><div class="num">${resources.length}</div><div class="cap">resources</div></div>
     <div class="stat"><div class="num">${totalVotes}</div><div class="cap">votes cast</div></div>
     <div class="stat"><div class="num">${fields.size}</div><div class="cap">disciplines voting</div></div>`;
+
+  // votes-by-discipline mini chart (single hue, direct labels)
+  const byField = {};
+  Object.values(voteAgg).flat().forEach(a => byField[a.voter_field] = (byField[a.voter_field] || 0) + a.n);
+  const top = Object.entries(byField).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  $("#fieldChart").hidden = !top.length;
+  if (top.length) {
+    const max = top[0][1];
+    $("#fieldChartRows").innerHTML = top.map(([f, n]) => `
+      <div class="fc-row">
+        <span class="fc-label" title="${esc(f)}">${esc(f)}</span>
+        <div><div class="fc-bar" style="width:${Math.max(4, Math.round(n / max * 100))}%"></div></div>
+        <span class="fc-n">${n}</span>
+      </div>`).join("");
+  }
   $("#footerNote").textContent = LIVE ? "Live · votes shared with everyone" : "Demo mode · votes stay in this browser";
 }
 
@@ -1015,14 +1312,23 @@ $("#cancelAuth").onclick = () => closeOverlay("#authOverlay");
 $("#cancelSuggest").onclick = () => closeOverlay("#suggestOverlay");
 $("#submitSuggest").onclick = submitSuggestion;
 $("#editPersona").onclick = openPersona;
+$("#activityBtnDemo").onclick = openActivity;
 $("#savePersona").onclick = savePersona;
 $("#skipPersona").onclick = () => closeOverlay("#personaOverlay");
-$$(".overlay").forEach(o => o.addEventListener("click", e => { if (e.target === o) o.classList.remove("open"); }));
-document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay.open").forEach(o => o.classList.remove("open")); });
+$("#closeActivity").onclick = () => closeOverlay("#activityOverlay");
+function dismissOverlay(o) {
+  if (o.id === "detailOverlay") { closeDetail(); return; }
+  o.classList.remove("open");
+}
+$$(".overlay").forEach(o => o.addEventListener("click", e => { if (e.target === o) dismissOverlay(o); }));
+document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay.open").forEach(dismissOverlay); });
 
 /* ---------- Boot ---------- */
 (async function boot() {
   if (LIVE) {
+    // skeleton shimmer while first load is in flight
+    $("#resourceGrid").innerHTML = Array.from({ length: 6 }, (_, i) =>
+      `<div class="skel" style="animation-delay:${i * .08}s"></div>`).join("");
     ({ data: { session } } = await sb.auth.getSession());
     sb.auth.onAuthStateChange((_event, s) => {
       // defer: awaiting supabase calls directly inside this callback can deadlock
@@ -1040,8 +1346,64 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
   renderAuthArea();
   refreshPersonaBar();
   render();
+  // deep link: #r=<resource id> opens the detail view
+  const m = location.hash.match(/^#r=(.+)$/);
+  if (m) {
+    const rid = decodeURIComponent(m[1]);
+    if (resources.some(r => String(r.id) === String(rid))) openDetail(rid);
+  }
   if (LIVE && session && !profile) setTimeout(openPersona, 600);
   if (!LIVE && !LS.persona) setTimeout(openPersona, 600);
+  logVisit();
+  loadStats();
+})();
+
+/* ---------- Constellation background ---------- */
+(function constellation() {
+  const cv = document.getElementById("constellation");
+  if (!cv || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const ctx = cv.getContext("2d");
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  let w, h, pts = [], raf = null;
+  function init() {
+    w = cv.width = cv.offsetWidth * dpr;
+    h = cv.height = cv.offsetHeight * dpr;
+    const n = Math.min(80, Math.max(28, Math.floor(cv.offsetWidth / 16)));
+    pts = Array.from({ length: n }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - .5) * .18 * dpr, vy: (Math.random() - .5) * .18 * dpr,
+      r: (Math.random() * 1.5 + .7) * dpr
+    }));
+  }
+  function tick() {
+    ctx.clearRect(0, 0, w, h);
+    const dark = document.documentElement.dataset.theme === "dark";
+    const base = dark ? "134,182,239" : "42,120,214";
+    const maxD = 125 * dpr;
+    for (const p of pts) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > w) p.vx *= -1;
+      if (p.y < 0 || p.y > h) p.vy *= -1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7);
+      ctx.fillStyle = `rgba(${base},${dark ? .55 : .4})`; ctx.fill();
+    }
+    ctx.lineWidth = .7 * dpr;
+    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+      const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+      const d = Math.hypot(dx, dy);
+      if (d < maxD) {
+        ctx.strokeStyle = `rgba(${base},${((1 - d / maxD) * (dark ? .3 : .2)).toFixed(3)})`;
+        ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke();
+      }
+    }
+    raf = requestAnimationFrame(tick);
+  }
+  addEventListener("resize", init);
+  document.addEventListener("visibilitychange", () => {
+    cancelAnimationFrame(raf);
+    if (!document.hidden) raf = requestAnimationFrame(tick);
+  });
+  init(); tick();
 })();
 </script>
 </body>
