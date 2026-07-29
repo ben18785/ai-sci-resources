@@ -497,6 +497,7 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
 .sc-type { font-size: .72rem; color: var(--accent-deep); background: var(--accent-soft); border-radius: 6px; padding: 2px 8px; width: max-content; font-weight: 650; }
 .sc-title { font-size: .92rem; font-weight: 650; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .sc-votes { margin-top: auto; color: var(--muted); font-size: .82rem; font-weight: 700; }
+.sc-by { font-size: .72rem; color: var(--muted); }
 
 /* Browse: sidebar directory layout */
 #browseLayout { display: grid; grid-template-columns: 230px 1fr; gap: 22px; align-items: start; }
@@ -2574,10 +2575,11 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
             <span class="sc-type">${TYPE_ICONS[r.rtype] || ""} ${esc(r.rtype)}</span>
             <span class="sc-title">${esc(r.title)}</span>
             <span class="sc-votes">▲ ${v} vote${v === 1 ? "" : "s"}</span>
+            ${r.suggested_by ? `<span class="sc-by"${r.suggester_id ? ` data-uid="${esc(String(r.suggester_id))}"` : ""}>by ${esc(r.suggested_by)}</span>` : ""}
           </button>`).join("")}</div>
       </section>`;
     }).join("");
-    shelvesView.querySelectorAll("[data-shelfopen]").forEach(b => b.onclick = () => openDetail(b.dataset.shelfopen));
+    shelvesView.querySelectorAll("[data-shelfopen]").forEach(b => b.onclick = e => { if (e.target.closest(".who-link")) return; openDetail(b.dataset.shelfopen); });
     shelvesView.querySelectorAll("[data-shelfall]").forEach(b => b.onclick = () => {
       filters.cat = b.dataset.shelfall; rebuildTopics(); render(); switchView("browse");
     });
