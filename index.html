@@ -702,6 +702,50 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
 .rq-attach-row .hint-s { flex-basis: 100%; font-size: .74rem; color: var(--muted); }
 .rq-empty { text-align: center; color: var(--muted); padding: 44px 20px; border: 1.5px dashed var(--hairline); border-radius: var(--radius); }
 
+/* ============ PUBLIC PROFILES ============ */
+#profileOverlay { z-index: 55; }  /* card sits above the settings modal when previewing */
+.pf-avatar {
+  width: 72px; height: 72px; border-radius: 50%; flex: none;
+  display: grid; place-items: center; font-size: 1.7rem; font-weight: 800; color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--violet));
+  overflow: hidden; border: 2px solid var(--border);
+}
+.pf-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.pf-head { display: flex; gap: 16px; align-items: center; }
+.pf-head h2 { font-size: 1.3rem; letter-spacing: -.015em; }
+.pf-inst { color: var(--ink-2); font-size: .9rem; margin-top: 2px; }
+.pf-fields { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.pf-blurb { color: var(--ink-2); font-size: .92rem; margin-top: 14px; line-height: 1.55; }
+.pf-email { color: var(--muted); font-size: .84rem; margin-top: 10px; }
+.pf-email b { color: var(--ink-2); font-weight: 650; }
+.pf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 18px; }
+.pf-stat {
+  background: var(--surface-2); border: 1px solid var(--hairline);
+  border-radius: 12px; padding: 12px 14px;
+}
+.pf-stat .n { font-size: 1.35rem; font-weight: 800; letter-spacing: -.02em; }
+.pf-stat .sub { font-size: .74rem; color: var(--muted); font-weight: 650; margin-top: 2px; }
+.pf-since { color: var(--muted); font-size: .78rem; margin-top: 14px; }
+
+/* clickable member names */
+.who-link { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.who-link:hover { color: var(--accent); }
+
+/* settings form */
+.pub-row { display: flex; gap: 14px; align-items: center; margin-top: 16px; }
+.pub-row .pf-avatar { width: 64px; height: 64px; font-size: 1.4rem; }
+.pub-avatar-btns { display: flex; flex-direction: column; gap: 6px; }
+.pub-avatar-btns .btn { font-size: .8rem; padding: 6px 12px; }
+.pub-avatar-btns .src { font-size: .72rem; color: var(--muted); }
+.pub-toggle { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--hairline); cursor: pointer; }
+.pub-toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+.pub-toggle b { font-size: .95rem; }
+.pub-toggle .sub { display: block; font-size: .78rem; color: var(--muted); font-weight: 400; }
+.pub-check { display: flex; gap: 8px; align-items: center; font-size: .88rem; color: var(--ink-2); margin-top: 14px; cursor: pointer; }
+.pub-check input { accent-color: var(--accent); }
+.pub-disabled { opacity: .45; pointer-events: none; }
+.pub-hint { font-size: .76rem; color: var(--muted); margin-top: 4px; }
+
 </style>
 </head>
 <body>
@@ -1510,7 +1554,7 @@ function commentsHtml(r) {
       return `
       <div class="cmt">
         <div class="head">
-          <span class="who">${esc(c.author_name || "Anonymous")}</span>
+          <span class="who" data-uid="${esc(String(c.author_id || ""))}">${esc(c.author_name || "Anonymous")}</span>
           <span class="when">${esc(fmtWhen(c.created_at))}</span>
           <button class="cmt-up ${voted ? "voted" : ""}" data-cmtvote="${esc(String(c.id))}"
             aria-pressed="${voted}" title="${voted ? "Remove upvote" : "Upvote this comment"}">▲${n ? " " + n : ""}</button>
@@ -1626,7 +1670,7 @@ function renderDetail() {
           ${r.level && r.level !== "any" ? `<span class="tag level">${esc(r.level)}</span>` : ""}
           ${(r.languages || []).map(l => `<span class="tag lang">${esc(l)}</span>`).join("")}
           ${(r.disciplines || []).map(d => `<span class="tag">${esc(d)}</span>`).join("")}
-          ${r.suggested_by ? `<span class="tag">by ${esc(r.suggested_by)}</span>` : ""}
+          ${r.suggested_by ? `<span class="tag" data-uid="${esc(String(r.suggester_id || ""))}">by ${esc(r.suggested_by)}</span>` : ""}
           ${resToRequest[r.id] ? `<button class="chip cmt-toggle" data-goreq="${esc(String(resToRequest[r.id]))}" title="See the request thread">💬 added in answer to a request</button>` : ""}
         </div>
         <p class="desc" style="margin-top:10px;color:var(--ink-2)">${esc(r.description || "")}</p>
@@ -2115,7 +2159,7 @@ function render() {
             ${(r.languages || []).map(l => `<span class="tag lang">${esc(l)}</span>`).join("")}
             ${(r.disciplines || []).map(d => `<span class="tag">${esc(d)}</span>`).join("")}
             ${matchTag}
-            ${r.suggested_by ? `<span class="tag">by ${esc(r.suggested_by)}</span>` : ""}
+            ${r.suggested_by ? `<span class="tag" data-uid="${esc(String(r.suggester_id || ""))}">by ${esc(r.suggested_by)}</span>` : ""}
             ${pathStarHtml(r.id)}
             <button class="chip cmt-toggle" data-cmt="${esc(String(r.id))}" aria-expanded="${openComments.has(r.id)}">
               💬 ${(comments[r.id] || []).length || ""} ${(comments[r.id] || []).length === 1 ? "comment" : "comments"}
@@ -2141,7 +2185,7 @@ function render() {
   // click anywhere on a card (except its controls) opens the detail view
   $$("#resourceGrid .card").forEach(c => {
     c.onclick = e => {
-      if (e.target.closest("a, button, textarea, .cmts")) return;
+      if (e.target.closest("a, button, textarea, .cmts, .who-link")) return;
       const r = resources.find(x => String(x.id) === c.dataset.rid);
       if (r) openDetail(r.id);
     };
@@ -2713,7 +2757,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
             ${q.body ? `<div class="body-txt">${esc(q.body)}</div>` : ""}
             <div class="meta">
               <span class="tag ${q.resolved ? "rq-resolved" : "rq-open"}">${q.resolved ? "✓ resolved" : "open"}</span>
-              <span class="tag">by ${esc(q.author_name || "Anonymous")}</span>
+              <span class="tag" data-uid="${esc(String(q.author_id || ""))}">by ${esc(q.author_name || "Anonymous")}</span>
               <span class="tag">${esc(fmtWhen(q.created_at))}</span>
               <button class="chip cmt-toggle" data-rqx="${esc(String(q.id))}">💬 ${reps.length || ""} ${reps.length === 1 ? "reply" : "replies"}</button>
               ${isMineReq(q) && !q.resolved ? `<button class="mod-btn" data-rqres="${esc(String(q.id))}">✓ mark resolved</button>` : ""}
@@ -2727,7 +2771,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
               const mineRep = LIVE ? rep.author_id === session?.user?.id : rep.author_id === "demo-you";
               return `<div class="rq-reply">
                 <div class="head">
-                  <span class="who">${esc(rep.author_name || "Anonymous")}</span>
+                  <span class="who" data-uid="${esc(String(rep.author_id || ""))}">${esc(rep.author_name || "Anonymous")}</span>
                   <span class="when">${esc(fmtWhen(rep.created_at))}</span>
                   ${(mineRep || isAdmin) ? `<button class="del" style="margin-left:auto" data-rqrdel="${esc(String(rep.id))}" data-rqof="${esc(String(q.id))}">${mineRep ? "delete" : "🛡 delete"}</button>` : ""}
                 </div>
@@ -2836,6 +2880,306 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
 
   const origRender = window.render;
   window.render = function () { origRender(); if (reqView.style.display !== "none") renderRequests(); };
+})();
+
+</script>
+<script>
+/* ============ PUBLIC PROFILES (opt-in) ============ */
+(function publicProfiles() {
+  let pubProfiles = {};   // user_id -> public row
+  let pubStats = {};      // user_id -> stats row
+  let pendingAvatar;      // undefined = unchanged; null = use sign-in avatar; string = new upload URL
+
+  /* ---- demo fixtures ---- */
+  const DEMO_PUB = {
+    "demo-b": { id: "demo-b", name: "Marco Rossi", institution: "ETH Zürich", fields: ["Computer science"],
+      blurb: "Research software engineer working on ML infrastructure for climate models. I collect good teaching material the way other people collect stamps.",
+      pub_email: "marco.rossi@ethz.ch", avatar_url: null, letter: "M", hue: "linear-gradient(135deg,#eb6834,#eda100)",
+      created_at: "2026-05-10", demoStats: { resources_added: 4, votes_earned: 23, comments_n: 11, answered_n: 3 } },
+    "demo-a": { id: "demo-a", name: "Priya Nair", institution: "University of Cambridge", fields: ["Physical sciences"],
+      blurb: "Postdoc in astrophysics, learning deep learning the hard way and writing up what actually helped.",
+      pub_email: null, avatar_url: null, letter: "P", hue: "linear-gradient(135deg,#1baf7a,#3987e5)",
+      created_at: "2026-06-02", demoStats: { resources_added: 2, votes_earned: 9, comments_n: 6, answered_n: 1 } },
+    "demo-e": { id: "demo-e", name: "Leah Okonkwo", institution: "UCL", fields: ["Medicine & health"],
+      blurb: null, pub_email: null, avatar_url: null, letter: "L", hue: "linear-gradient(135deg,#9085e9,#d55181)",
+      created_at: "2026-07-01", demoStats: { resources_added: 1, votes_earned: 5, comments_n: 3, answered_n: 0 } }
+  };
+  const getJ = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+  const demoPub = () => getJ("aisci_demo_pub", { public: false, name: "", institution: "", email: "", blurb: "", showFields: false, photo: null });
+  const saveDemoPub = v => localStorage.setItem("aisci_demo_pub", JSON.stringify(v));
+
+  function refreshDemoPub() {
+    pubProfiles = { ...DEMO_PUB };
+    const s = demoPub();
+    if (s.public) {
+      pubProfiles["demo-you"] = { id: "demo-you", name: s.name || "You", institution: s.institution,
+        pub_email: s.email || null, blurb: s.blurb, avatar_url: s.photo,
+        fields: s.showFields ? (curPersona()?.fields || []) : [], created_at: "2026-07-28" };
+    }
+  }
+
+  function demoMyStats() {
+    const mineRes = resources.filter(r => String(r.id).startsWith("local-"));
+    return {
+      resources_added: mineRes.length,
+      votes_earned: mineRes.reduce((t, r) => t + (voteAgg[r.id] || []).reduce((x, a) => x + a.n, 0), 0),
+      comments_n: Object.values(comments).flat().filter(c => c.author_id === "demo-you").length,
+      answered_n: Object.values(reqReplies).flat().filter(rp => rp.author_id === "demo-you" && rp.resource_id).length
+    };
+  }
+
+  /* ---- data loading (chained onto loadData) ---- */
+  const origLoadData = window.loadData;
+  window.loadData = async function () {
+    await origLoadData();
+    if (LIVE) {
+      try {
+        const [{ data: pp }, { data: ps }] = await Promise.all([
+          sb.from("public_profiles").select("*"),
+          sb.from("public_profile_stats").select("*")
+        ]);
+        pubProfiles = {}; (pp || []).forEach(p => pubProfiles[p.id] = p);
+        pubStats = {}; (ps || []).forEach(s => pubStats[s.id] = s);
+      } catch (e) { console.error(e); }
+    } else {
+      refreshDemoPub();
+    }
+  };
+  if (!LIVE) refreshDemoPub();   // demo boot calls loadData before this patch exists
+
+  /* ---- profile card ---- */
+  const cardOv = document.createElement("div");
+  cardOv.className = "overlay"; cardOv.id = "profileOverlay";
+  cardOv.innerHTML = `<div class="modal" role="dialog" aria-modal="true" id="profileCard"></div>`;
+  document.body.append(cardOv);
+
+  const obfEmail = e => e ? esc(e).replace("@", " [at] ") : null;
+  function avatarHtml(p, size) {
+    if (p.avatar_url) return `<span class="pf-avatar" ${size ? `style="width:${size}px;height:${size}px"` : ""}><img src="${esc(p.avatar_url)}" alt=""></span>`;
+    const letter = p.letter || (p.name || "?").trim()[0]?.toUpperCase() || "?";
+    return `<span class="pf-avatar" style="${p.hue ? `background:${p.hue};` : ""}${size ? `width:${size}px;height:${size}px;` : ""}">${esc(letter)}</span>`;
+  }
+  const tile = (n, sub) => `<div class="pf-stat"><div class="n">${n ?? 0}</div><div class="sub">${sub}</div></div>`;
+  const sinceTxt = iso => new Date(iso).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+
+  function openProfileCard(uid, override, statsOverride) {
+    const p = override || pubProfiles[uid];
+    if (!p) return;
+    const s = statsOverride || (LIVE ? (pubStats[uid] || {}) : (p.demoStats || (uid === "demo-you" ? demoMyStats() : {})));
+    document.getElementById("profileCard").innerHTML = `
+      <div class="pf-head">
+        ${avatarHtml(p)}
+        <div>
+          <h2>${esc(p.name || "Community member")}</h2>
+          ${p.institution ? `<div class="pf-inst">${esc(p.institution)}</div>` : ""}
+          ${p.fields?.length ? `<div class="pf-fields">${p.fields.map(f => `<span class="tag">${esc(f)}</span>`).join("")}</div>` : ""}
+        </div>
+      </div>
+      ${p.blurb ? `<div class="pf-blurb">${esc(p.blurb)}</div>` : ""}
+      ${p.pub_email ? `<div class="pf-email">✉ <b>${obfEmail(p.pub_email)}</b></div>` : ""}
+      <div class="pf-stats">
+        ${tile(s.resources_added, "resources added")}
+        ${tile(s.votes_earned, "votes earned")}
+        ${tile(s.comments_n, "comments")}
+        ${tile(s.answered_n, "requests answered")}
+      </div>
+      ${p.created_at ? `<div class="pf-since">Member since ${esc(sinceTxt(p.created_at))}</div>` : ""}
+      <div class="actions"><button class="btn ghost" id="pfClose">Close</button></div>`;
+    document.getElementById("pfClose").onclick = () => cardOv.classList.remove("open");
+    cardOv.classList.add("open");
+  }
+  window.openProfileCard = openProfileCard;
+
+  /* ---- settings ---- */
+  const setOv = document.createElement("div");
+  setOv.className = "overlay"; setOv.id = "pubOverlay";
+  setOv.innerHTML = `<div class="modal" role="dialog" aria-modal="true" id="pubModal"></div>`;
+  document.body.append(setOv);
+
+  function resizeImage(file, size = 256) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement("canvas");
+        const sq = Math.min(img.width, img.height);
+        c.width = c.height = size;
+        c.getContext("2d").drawImage(img, (img.width - sq) / 2, (img.height - sq) / 2, sq, sq, 0, 0, size, size);
+        c.toBlob(b => b ? resolve(b) : reject(new Error("resize failed")), "image/jpeg", .85);
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  function curSettings() {
+    if (!LIVE) { const s = demoPub(); return { public_profile: s.public, pub_name: s.name, institution: s.institution, pub_email: s.email, blurb: s.blurb, show_fields: s.showFields, avatar_url: s.photo }; }
+    return { public_profile: profile?.public_profile || false, pub_name: profile?.pub_name || "", institution: profile?.institution || "",
+      pub_email: profile?.pub_email || "", blurb: profile?.blurb || "", show_fields: profile?.show_fields || false, avatar_url: profile?.avatar_url || null };
+  }
+  function oauthAvatar() { return LIVE ? (session?.user?.user_metadata?.avatar_url || null) : null; }
+
+  function renderSettings() {
+    const s = curSettings();
+    const shownAvatar = pendingAvatar !== undefined ? pendingAvatar : s.avatar_url;
+    const effective = shownAvatar || oauthAvatar();
+    document.getElementById("pubModal").innerHTML = `
+      <h2>Public profile</h2>
+      <p class="hint">Entirely optional. Nothing is shown to anyone until you switch this on, and every field below is optional too.</p>
+      <label class="pub-toggle" style="margin-top:16px">
+        <input type="checkbox" id="pubOn" ${s.public_profile ? "checked" : ""}>
+        <span><b>Make my profile public</b><span class="sub">Your name on comments and contributions becomes clickable, showing the card below.</span></span>
+      </label>
+      <div id="pubFields" class="${s.public_profile ? "" : "pub-disabled"}">
+        <div class="pub-row">
+          ${effective ? `<span class="pf-avatar"><img src="${esc(effective)}" alt=""></span>` : avatarHtml({ name: s.pub_name || displayName?.() || "Y" })}
+          <div class="pub-avatar-btns">
+            <button class="btn" id="pubUpload" type="button">Upload a photo…</button>
+            <button class="btn" id="pubOauth" type="button">Use my sign-in avatar</button>
+            <span class="src">${shownAvatar ? "Using uploaded photo" : "Using your GitHub/Google avatar"}</span>
+            <input type="file" id="pubFile" accept="image/*" hidden>
+          </div>
+        </div>
+        <div class="field"><label>Display name</label><input type="text" id="pubName" maxlength="80" value="${esc(s.pub_name)}" placeholder="${esc(LIVE ? (displayName?.() || "") : "e.g. Ada Lovelace")}"></div>
+        <div class="field"><label>Institution</label><input type="text" id="pubInst" maxlength="120" value="${esc(s.institution)}" placeholder="e.g. University of Cambridge"></div>
+        <div class="field"><label>Blurb</label><textarea id="pubBlurb" maxlength="300" placeholder="A sentence or two about you and what you're learning">${esc(s.blurb)}</textarea></div>
+        <div class="field"><label>Contact email</label><input type="text" id="pubEmail" maxlength="120" value="${esc(s.pub_email)}" placeholder="Optional — shown on your profile">
+          <p class="pub-hint">Public emails attract spam bots — it'll be shown as "name [at] domain", but a link to your institutional page in the blurb is often the safer choice.</p></div>
+        <label class="pub-check"><input type="checkbox" id="pubShowFields" ${s.show_fields ? "checked" : ""}> Show my field(s) on my profile (${esc((curPersona()?.fields || []).join(", ") || "none set")})</label>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="pubPreview">Preview my card</button>
+        <button class="btn ghost" id="pubCancel">Cancel</button>
+        <button class="btn primary" id="pubSave">Save</button>
+      </div>`;
+
+    const el = id => document.getElementById(id);
+    const collect = () => ({
+      public_profile: el("pubOn").checked, pub_name: el("pubName").value.trim(),
+      institution: el("pubInst").value.trim(), pub_email: el("pubEmail").value.trim(),
+      blurb: el("pubBlurb").value.trim(), show_fields: el("pubShowFields").checked
+    });
+    el("pubOn").onchange = () => el("pubFields").classList.toggle("pub-disabled", !el("pubOn").checked);
+    el("pubCancel").onclick = () => { pendingAvatar = undefined; setOv.classList.remove("open"); };
+    el("pubUpload").onclick = () => el("pubFile").click();
+    el("pubOauth").onclick = () => { pendingAvatar = null; const v = collect(); persistFormOnly(v); renderSettings(); restoreForm(v); };
+    el("pubFile").onchange = async () => {
+      const f = el("pubFile").files[0];
+      if (!f) return;
+      try {
+        if (LIVE) {
+          const blob = await resizeImage(f);
+          const path = `${session.user.id}/avatar.jpg`;
+          const { error } = await sb.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+          if (error) { toast("Upload failed — is the avatars bucket set up?"); console.error(error); return; }
+          const { data } = sb.storage.from("avatars").getPublicUrl(path);
+          pendingAvatar = data.publicUrl + "?v=" + Date.now();
+        } else {
+          pendingAvatar = await new Promise(res => { const rd = new FileReader(); rd.onload = () => res(rd.result); rd.readAsDataURL(f); });
+        }
+        const v = collect(); renderSettings(); restoreForm(v);
+      } catch (e) { console.error(e); toast("Couldn't read that image."); }
+    };
+    let stash = null;
+    function persistFormOnly(v) { stash = v; }
+    function restoreForm(v) {
+      v = v || stash; if (!v) return;
+      el("pubOn").checked = v.public_profile; el("pubName").value = v.pub_name; el("pubInst").value = v.institution;
+      el("pubEmail").value = v.pub_email; el("pubBlurb").value = v.blurb; el("pubShowFields").checked = v.show_fields;
+      el("pubFields").classList.toggle("pub-disabled", !v.public_profile);
+    }
+    el("pubPreview").onclick = () => {
+      const v = collect();
+      const av = pendingAvatar !== undefined ? pendingAvatar : curSettings().avatar_url;
+      openProfileCard(null, {
+        name: v.pub_name || (LIVE ? displayName() : "You"), institution: v.institution,
+        pub_email: v.pub_email || null, blurb: v.blurb,
+        avatar_url: av || oauthAvatar(),
+        fields: v.show_fields ? (curPersona()?.fields || []) : [],
+        created_at: LIVE ? profile?.created_at : "2026-07-28"
+      }, LIVE ? (pubStats[session?.user?.id] || { resources_added: 0, votes_earned: 0, comments_n: 0, answered_n: 0 }) : demoMyStats());
+    };
+    el("pubSave").onclick = async () => {
+      const v = collect();
+      const avatar_url = pendingAvatar !== undefined ? pendingAvatar : curSettings().avatar_url;
+      if (LIVE) {
+        const rec = { ...v, pub_name: v.pub_name || null, institution: v.institution || null,
+          pub_email: v.pub_email || null, blurb: v.blurb || null, avatar_url };
+        const { error } = await sb.from("profiles").update(rec).eq("id", session.user.id);
+        if (error) { toast("Couldn't save — try again."); console.error(error); return; }
+        Object.assign(profile, rec);
+        if (rec.public_profile) {
+          pubProfiles[session.user.id] = { id: session.user.id, name: rec.pub_name || displayName(),
+            institution: rec.institution, pub_email: rec.pub_email, blurb: rec.blurb, avatar_url,
+            fields: rec.show_fields ? (profile.fields || []) : [], created_at: profile.created_at };
+        } else delete pubProfiles[session.user.id];
+      } else {
+        saveDemoPub({ public: v.public_profile, name: v.pub_name, institution: v.institution,
+          email: v.pub_email, blurb: v.blurb, showFields: v.show_fields, photo: avatar_url });
+        refreshDemoPub();
+      }
+      pendingAvatar = undefined;
+      setOv.classList.remove("open");
+      render();
+      toast(v.public_profile ? "Public profile saved ✓" : "Profile set to private ✓");
+    };
+  }
+
+  function openPubSettings() {
+    if (LIVE) {
+      if (!session) { openAuth(); return; }
+      if (!profile) { openPersona(); toast("Tell us your background first — then set up your public profile."); return; }
+    }
+    pendingAvatar = undefined;
+    renderSettings();
+    setOv.classList.add("open");
+  }
+  window.openPubSettings = openPubSettings;
+
+  /* ---- entry points ---- */
+  const origAuthArea = window.renderAuthArea;
+  window.renderAuthArea = function () {
+    origAuthArea();
+    if (LIVE && session) {
+      const chip = document.querySelector("#authArea .userchip");
+      const so = document.getElementById("signOutBtn");
+      if (chip && so) {
+        const b = document.createElement("button");
+        b.className = "out"; b.id = "pubProfileBtn"; b.textContent = "Public profile";
+        chip.insertBefore(b, so);
+        b.onclick = openPubSettings;
+      }
+    }
+  };
+  if (!LIVE) {
+    const b = document.createElement("button");
+    b.className = "btn edit"; b.id = "pubBtn"; b.textContent = "Public profile";
+    document.getElementById("personaBar").append(b);
+    b.onclick = openPubSettings;
+    const tb = document.createElement("button");
+    tb.className = "btn"; tb.id = "pubBtnTop"; tb.textContent = "👤 Profile";
+    document.querySelector(".top-actions").insertBefore(tb, document.getElementById("suggestBtn"));
+    tb.onclick = openPubSettings;
+  }
+  renderAuthArea();   // re-run so the button appears on first paint if already signed in
+
+  /* ---- clickable names ---- */
+  document.addEventListener("click", e => {
+    const el = e.target.closest("[data-uid]");
+    if (!el) return;
+    const uid = el.dataset.uid;
+    if (uid && pubProfiles[uid]) { e.stopPropagation(); openProfileCard(uid); }
+  });
+  function decorate() {
+    document.querySelectorAll("[data-uid]").forEach(el => {
+      const has = el.dataset.uid && pubProfiles[el.dataset.uid];
+      el.classList.toggle("who-link", Boolean(has));
+      if (has) el.title = "View profile";
+    });
+  }
+  const origRender = window.render;
+  window.render = function () { origRender(); decorate(); };
+  new MutationObserver(decorate).observe(document.body, { childList: true, subtree: true });
 })();
 
 </script>
