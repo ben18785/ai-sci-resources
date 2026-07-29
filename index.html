@@ -449,6 +449,90 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
   .vote button { width: 46px; height: 46px; }
   .hero-inner { padding: 40px 20px 30px; }
 }
+/* ============ UI SHELL: shelves / browse / constellation views ============ */
+
+/* Full cosmos: the constellation becomes a fixed, full-page backdrop */
+#constellation { position: fixed !important; inset: 0; z-index: 0; opacity: .45; }
+.hero, .wrap, footer { position: relative; z-index: 1; }
+.hero {
+  background:
+    radial-gradient(1100px 500px at 15% -10%, color-mix(in oklab, var(--accent) 20%, transparent), transparent 60%),
+    radial-gradient(900px 420px at 85% -20%, color-mix(in oklab, var(--violet) 16%, transparent), transparent 60%);
+}
+.card { background: color-mix(in oklab, var(--surface) 94%, transparent); backdrop-filter: blur(5px); }
+
+/* View tabs */
+.view-tabs { margin: 4px 0 20px; }
+
+/* Shelves */
+.shelf { margin: 4px 0 30px; }
+.shelf-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.shelf-head h2 { font-size: 1.12rem; letter-spacing: -.01em; }
+.shelf-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(200px, 235px); gap: 12px; overflow-x: auto; padding: 4px 2px 10px; scroll-snap-type: x proximity; }
+.shelf-card {
+  scroll-snap-align: start; text-align: left; display: flex; flex-direction: column; gap: 8px;
+  background: color-mix(in oklab, var(--surface) 94%, transparent); backdrop-filter: blur(5px);
+  border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+  cursor: pointer; font: inherit; color: var(--ink); box-shadow: var(--shadow-sm);
+  transition: transform .15s, box-shadow .15s;
+}
+.shelf-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.sc-type { font-size: .72rem; color: var(--accent-deep); background: var(--accent-soft); border-radius: 6px; padding: 2px 8px; width: max-content; font-weight: 650; }
+.sc-title { font-size: .92rem; font-weight: 650; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.sc-votes { margin-top: auto; color: var(--muted); font-size: .82rem; font-weight: 700; }
+
+/* Browse: sidebar directory layout */
+#browseLayout { display: grid; grid-template-columns: 230px 1fr; gap: 22px; align-items: start; }
+#browseSidebar {
+  position: sticky; top: 66px;
+  background: color-mix(in oklab, var(--surface) 94%, transparent); backdrop-filter: blur(5px);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 14px;
+}
+.sb-title { font-size: .76rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 8px 4px; }
+.sb-topic { display: flex; justify-content: space-between; gap: 8px; width: 100%; border: none; background: none; font: inherit; font-size: .87rem; padding: 7px 10px; border-radius: 8px; cursor: pointer; color: var(--ink-2); text-align: left; }
+.sb-topic:hover { background: var(--surface-2); color: var(--ink); }
+.sb-topic.active { background: var(--accent-soft); color: var(--accent-deep); font-weight: 650; }
+.sb-n { color: var(--muted); font-size: .76rem; }
+.sb-filters { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+.sb-filters select.ctl { width: 100%; }
+@media (max-width: 780px) { #browseLayout { grid-template-columns: 1fr; } #browseSidebar { position: static; } }
+
+/* Density: compact list mode */
+.grid.compact { gap: 6px; counter-reset: rank; }
+.grid.compact .card { counter-increment: rank; grid-template-columns: auto auto 1fr; align-items: center; padding: 9px 16px; gap: 12px; }
+.grid.compact .card::before { display: none; }
+.grid.compact .card h3 { font-size: .95rem; }
+.grid.compact .card h3::before { content: counter(rank); color: var(--muted); font-weight: 700; font-size: .85rem; display: inline-block; min-width: 1.7em; }
+.grid.compact .desc { display: none; }
+.grid.compact .meta { margin-top: 4px; }
+.grid.compact .meta .tag:nth-child(n+4):not(.match):not([data-cmt]) { display: none; }
+.grid.compact .vote { flex-direction: row; align-items: center; gap: 6px; }
+.grid.compact .vote button { width: 30px; height: 30px; font-size: .85rem; border-radius: 8px; }
+.grid.compact .vote .count { font-size: .92rem; }
+.grid.compact .vote .lbl { display: none; }
+
+/* Constellation as an inline view */
+#graphView { background: color-mix(in oklab, var(--surface) 94%, transparent); backdrop-filter: blur(5px); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+
+/* Sticky header */
+#stickyBar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+  display: flex; gap: 12px; align-items: center; padding: 8px 20px;
+  background: color-mix(in oklab, var(--page) 80%, transparent); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--hairline);
+  transform: translateY(-100%); transition: transform .25s ease;
+}
+#stickyBar.show { transform: none; }
+#stickyBar .brand { font-size: .95rem; }
+#stickyBar input {
+  flex: 1; max-width: 340px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; padding: 7px 14px; font: inherit; font-size: .9rem; color: var(--ink); outline: none;
+}
+#stickyBar .btn { padding: 7px 14px; font-size: .85rem; }
+
+/* compact mode: single-line ellipsised titles */
+.grid.compact .card h3 { display: flex; gap: 6px; align-items: baseline; min-width: 0; }
+.grid.compact .card h3 a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -1783,6 +1867,158 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
   });
   init(); tick();
 })();
+</script>
+<script>
+/* ============ UI SHELL: shelves / browse / constellation views ============ */
+(function uiShell() {
+  let curView = "shelves";
+
+  const wrap = document.querySelector(".wrap");
+  const controls = document.querySelector(".controls");
+  const sortTabsRow = document.querySelector(".tabs").parentElement;
+  const grid = document.getElementById("resourceGrid");
+
+  /* ---- view tab bar ---- */
+  const viewBar = document.createElement("div");
+  viewBar.className = "tabs view-tabs";
+  viewBar.innerHTML = `
+    <button class="tab active" data-view="shelves">Shelves</button>
+    <button class="tab" data-view="browse">Browse</button>
+    <button class="tab" data-view="graph">Constellation</button>`;
+  wrap.insertBefore(viewBar, controls);
+
+  /* ---- containers ---- */
+  const shelvesView = document.createElement("div"); shelvesView.id = "shelvesView";
+  const layout = document.createElement("div"); layout.id = "browseLayout";
+  const sidebar = document.createElement("aside"); sidebar.id = "browseSidebar";
+  const main = document.createElement("div"); main.id = "browseMain";
+  const graphView = document.createElement("div"); graphView.id = "graphView";
+  layout.append(sidebar, main);
+  wrap.insertBefore(shelvesView, controls);
+  wrap.insertBefore(layout, controls);
+  wrap.insertBefore(graphView, controls);
+
+  /* ---- browse toolbar: search + sort dropdown + density toggle ---- */
+  const toolbar = document.createElement("div"); toolbar.className = "controls";
+  toolbar.append(document.querySelector(".search"));
+  const sortSel = document.createElement("select"); sortSel.className = "ctl";
+  sortSel.innerHTML = `
+    <option value="foryou">Sort: Recommended</option>
+    <option value="trending">Sort: Hot</option>
+    <option value="top">Sort: All-time</option>
+    <option value="new">Sort: Recently added</option>`;
+  sortSel.onchange = e => { sortMode = e.target.value; render(); };
+  toolbar.append(sortSel);
+  const dens = document.createElement("button"); dens.className = "btn"; dens.id = "densToggle"; dens.textContent = "Compact";
+  dens.onclick = () => {
+    grid.classList.toggle("compact");
+    dens.textContent = grid.classList.contains("compact") ? "Comfortable" : "Compact";
+  };
+  toolbar.append(dens);
+  main.append(toolbar, grid);
+
+  /* ---- sidebar: topic directory + remaining filters ---- */
+  const topicsBox = document.createElement("div"); topicsBox.id = "sbTopics";
+  const filtersBox = document.createElement("div"); filtersBox.className = "sb-filters";
+  sidebar.append(topicsBox, filtersBox);
+  ["filterDiscipline", "filterType", "filterLevel"].forEach(id => filtersBox.append(document.getElementById(id)));
+  function rebuildTopics() {
+    const counts = {};
+    resources.forEach(r => { const c = r.category || "Other"; counts[c] = (counts[c] || 0) + 1; });
+    topicsBox.innerHTML = `<div class="sb-title">Topics</div>`;
+    const mk = (label, val) => {
+      const b = document.createElement("button");
+      b.className = "sb-topic" + (filters.cat === val ? " active" : "");
+      b.innerHTML = `<span>${esc(label)}</span><span class="sb-n">${val ? (counts[val] || 0) : resources.length}</span>`;
+      b.onclick = () => { filters.cat = val; rebuildTopics(); render(); };
+      return b;
+    };
+    topicsBox.append(mk("All topics", ""));
+    CATEGORIES.filter(c => counts[c]).forEach(c => topicsBox.append(mk(c, c)));
+  }
+
+  /* ---- hide the old rows (sort tabs live in the dropdown now) ---- */
+  controls.style.display = "none";
+  sortTabsRow.style.display = "none";
+
+  /* ---- shelves ---- */
+  function renderShelves() {
+    const byCat = {};
+    resources.forEach(r => (byCat[r.category || "Other"] ||= []).push(r));
+    const totals = Object.entries(byCat).map(([c, rs]) =>
+      [c, rs.reduce((t, r) => t + (voteAgg[r.id] || []).reduce((s, a) => s + a.n, 0), 0)])
+      .sort((a, b) => b[1] - a[1]);
+    shelvesView.innerHTML = totals.map(([c]) => {
+      const top = byCat[c]
+        .map(r => ({ r, v: (voteAgg[r.id] || []).reduce((s, a) => s + a.n, 0) }))
+        .sort((a, b) => b.v - a.v).slice(0, 5);
+      return `<section class="shelf">
+        <div class="shelf-head"><h2>${esc(c)}</h2>
+          <button class="linky" data-shelfall="${esc(c)}">See all ${byCat[c].length} →</button></div>
+        <div class="shelf-row">${top.map(({ r, v }) => `
+          <button class="shelf-card" data-shelfopen="${esc(String(r.id))}">
+            <span class="sc-type">${TYPE_ICONS[r.rtype] || ""} ${esc(r.rtype)}</span>
+            <span class="sc-title">${esc(r.title)}</span>
+            <span class="sc-votes">▲ ${v} vote${v === 1 ? "" : "s"}</span>
+          </button>`).join("")}</div>
+      </section>`;
+    }).join("");
+    shelvesView.querySelectorAll("[data-shelfopen]").forEach(b => b.onclick = () => openDetail(b.dataset.shelfopen));
+    shelvesView.querySelectorAll("[data-shelfall]").forEach(b => b.onclick = () => {
+      filters.cat = b.dataset.shelfall; rebuildTopics(); render(); switchView("browse");
+    });
+  }
+
+  /* ---- view switching ---- */
+  let graphMoved = false;
+  function switchView(v) {
+    curView = v;
+    viewBar.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.view === v));
+    shelvesView.style.display = v === "shelves" ? "" : "none";
+    layout.style.display = v === "browse" ? "" : "none";
+    graphView.style.display = v === "graph" ? "" : "none";
+    if (v === "shelves") renderShelves();
+    if (v === "graph") {
+      if (!graphMoved) { graphView.append(document.getElementById("graphMode"), document.getElementById("graphBox")); graphMoved = true; }
+      renderGraph();
+    }
+  }
+  viewBar.querySelectorAll(".tab").forEach(t => t.onclick = () => switchView(t.dataset.view));
+  window.switchView = switchView;
+
+  /* ---- refresh active view whenever data re-renders ---- */
+  const origRender = window.render;
+  window.render = function () {
+    origRender();
+    rebuildTopics();
+    if (curView === "shelves") renderShelves();
+  };
+
+  /* ---- sticky header ---- */
+  const sticky = document.createElement("div"); sticky.id = "stickyBar";
+  sticky.innerHTML = `
+    <span class="brand"><span class="brand-mark">⚛</span> AI in Science</span>
+    <input type="search" id="stickySearch" placeholder="Search resources…" aria-label="Search">
+    <button class="btn primary" id="stickySuggest">＋ Suggest</button>`;
+  document.body.append(sticky);
+  sticky.querySelector("#stickySearch").oninput = e => {
+    filters.q = e.target.value.toLowerCase();
+    const mainSearch = document.querySelector(".search input");
+    if (mainSearch) mainSearch.value = e.target.value;
+    if (curView !== "browse") switchView("browse");
+    render();
+  };
+  sticky.querySelector("#stickySuggest").onclick = () => document.getElementById("suggestBtn").click();
+  addEventListener("scroll", () => sticky.classList.toggle("show", scrollY > 420), { passive: true });
+
+  /* ---- cosmos: resize the (now full-page) starfield ---- */
+  dispatchEvent(new Event("resize"));
+
+  /* ---- boot into shelves ---- */
+  switchView("shelves");
+  rebuildTopics();
+})();
+
 </script>
 </body>
 </html>
