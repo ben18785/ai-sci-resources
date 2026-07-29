@@ -266,6 +266,7 @@ select.ctl {
 }
 .tag.type { background: var(--accent-soft); color: var(--accent-deep); border-color: transparent; }
 .tag.cat { background: color-mix(in oklab, var(--violet) 12%, var(--surface)); color: var(--violet); border-color: transparent; }
+.tag.lang { background: color-mix(in oklab, var(--warm) 12%, var(--surface)); color: var(--warm); border-color: transparent; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .7rem; }
 .tag.match {
   background: color-mix(in oklab, var(--good) 14%, var(--surface));
   color: var(--good-text); border-color: transparent;
@@ -588,6 +589,7 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
       <option value="intermediate">Intermediate</option>
       <option value="advanced">Advanced</option>
     </select>
+    <select class="ctl" id="filterLang"><option value="">All languages</option></select>
   </div>
 
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -631,6 +633,10 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
       <label>Your statistics background</label>
       <div class="chip-row" id="statsChips"></div>
     </div>
+    <div class="field">
+      <label>Programming languages you use (pick any, or none)</label>
+      <div class="chip-row" id="langChips"></div>
+    </div>
     <div class="actions">
       <button class="btn ghost" id="skipPersona">Skip for now</button>
       <button class="btn primary" id="savePersona">Save & explore</button>
@@ -653,6 +659,7 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
       <select id="sCat"></select>
     </div>
     <div class="field"><label>Relevant disciplines (pick any)</label><div class="chip-row" id="sDiscChips"></div></div>
+    <div class="field"><label>Involves code in… (pick the languages its code snippets use, if any)</label><div class="chip-row" id="sLangChips"></div></div>
     <div class="field"><label for="sLevel">Level</label>
       <select id="sLevel">
         <option value="any">Any level</option>
@@ -755,11 +762,13 @@ const STAGES = [
 const TYPES = ["course", "book", "paper", "tutorial", "tool", "video", "community", "other"];
 const TYPE_ICONS = { course:"🎓", book:"📖", paper:"📄", tutorial:"📓", tool:"🛠️", video:"🎬", community:"👥", other:"🔗" };
 const CATEGORIES = [
-  "Machine learning", "Applied statistics", "Programming", "Maths foundations",
+  "Machine learning", "Applied statistics", "Programming",
+  "Research Software Engineering", "Maths foundations",
   "Optimisation", "Information theory", "Graph theory", "Computer vision",
   "Signal processing", "Data visualization", "Fellowship workshops",
   "Institutional resources", "Other"
 ];
+const LANGUAGES = ["Python", "R", "Julia", "MATLAB", "C/C++", "Fortran", "JavaScript", "Shell", "Other"];
 
 /* Related-field groups: same-group votes get a partial affinity boost */
 const FIELD_GROUPS = [
@@ -821,7 +830,7 @@ let resources = [];          // [{id,title,url,description,rtype,disciplines,lev
 let voteAgg = {};            // resourceId -> [{voter_field, voter_stage, n}]
 let myVotes = new Set();     // resourceIds this voter has upvoted
 let sortMode = "foryou";
-let filters = { q: "", disc: "", type: "", level: "", cat: "" };
+let filters = { q: "", disc: "", type: "", level: "", cat: "", lang: "" };
 let session = null;          // Supabase auth session (live mode)
 let profile = null;          // {field, stage, display_name} from the profiles table
 let comments = {};           // resourceId -> [{id, author_id, author_name, body, created_at}]
@@ -877,6 +886,9 @@ function scores(r) {
     weighted += a.n * voteWeight(a, persona);
     if (persona && fieldsOf(a).some(f => persona.fields.includes(f))) fieldVotes += a.n;
   }
+  // small boost for resources using languages the viewer works in
+  if (persona?.languages?.length && (r.languages || []).some(l => persona.languages.includes(l)))
+    weighted *= 1.15;
   return { raw, weighted, fieldVotes };
 }
 
@@ -1213,6 +1225,7 @@ function renderDetail() {
           <span class="tag type">${esc(r.rtype)}</span>
           ${r.category ? `<span class="tag cat">${esc(r.category)}</span>` : ""}
           ${r.level && r.level !== "any" ? `<span class="tag level">${esc(r.level)}</span>` : ""}
+          ${(r.languages || []).map(l => `<span class="tag lang">${esc(l)}</span>`).join("")}
           ${(r.disciplines || []).map(d => `<span class="tag">${esc(d)}</span>`).join("")}
           ${r.suggested_by ? `<span class="tag">by ${esc(r.suggested_by)}</span>` : ""}
         </div>
@@ -1562,6 +1575,7 @@ async function submitSuggestion() {
     rtype: $("#sType").value,
     category: $("#sCat").value || null,
     disciplines: $$("#sDiscChips .chip.active").map(c => c.dataset.v),
+    languages: $$("#sLangChips .chip.active").map(c => c.dataset.v),
     level: $("#sLevel").value,
     suggested_by: $("#sName").value.trim() || (LIVE ? displayName() : null)
   };
@@ -1578,7 +1592,7 @@ async function submitSuggestion() {
   }
   closeOverlay("#suggestOverlay");
   ["#sTitle", "#sUrl", "#sDesc", "#sName"].forEach(s => $(s).value = "");
-  $$("#sDiscChips .chip.active").forEach(c => c.classList.remove("active"));
+  $$("#sDiscChips .chip.active, #sLangChips .chip.active").forEach(c => c.classList.remove("active"));
   render();
   toast("Thanks! Your suggestion is live 🎉");
 }
@@ -1591,6 +1605,7 @@ function openPersona() {
   $$("#stageChips .chip").forEach(c => c.classList.toggle("active", p?.stage === c.dataset.v));
   $$("#aiChips .chip").forEach(c => c.classList.toggle("active", p?.ai_level === c.dataset.v));
   $$("#statsChips .chip").forEach(c => c.classList.toggle("active", p?.stats_level === c.dataset.v));
+  $$("#langChips .chip").forEach(c => c.classList.toggle("active", Boolean(p?.languages?.includes(c.dataset.v))));
   $("#personaOverlay").classList.add("open");
 }
 async function savePersona() {
@@ -1598,16 +1613,17 @@ async function savePersona() {
   const stage = $("#stageChips .chip.active")?.dataset.v;
   const ai_level = $("#aiChips .chip.active")?.dataset.v;
   const stats_level = $("#statsChips .chip.active")?.dataset.v;
+  const languages = $$("#langChips .chip.active").map(c => c.dataset.v);   // optional
   if (!fields.length || !stage || !ai_level || !stats_level) {
     toast("Pick at least one field, plus your stage and both experience levels."); return;
   }
   if (LIVE) {
-    const rec = { id: session.user.id, field: fields[0], fields, stage, ai_level, stats_level, display_name: displayName() };
+    const rec = { id: session.user.id, field: fields[0], fields, stage, ai_level, stats_level, languages, display_name: displayName() };
     const { error } = await sb.from("profiles").upsert(rec);
     if (error) { toast("Couldn't save your profile — try again."); console.error(error); return; }
     profile = rec;
   } else {
-    LS.persona = { field: fields[0], fields, stage, ai_level, stats_level };
+    LS.persona = { field: fields[0], fields, stage, ai_level, stats_level, languages };
   }
   closeOverlay("#personaOverlay");
   refreshPersonaBar();
@@ -1634,6 +1650,8 @@ function render() {
     // empty disciplines = relevant to all fields, so it matches any discipline filter
     if (filters.disc && (r.disciplines || []).length && !r.disciplines.includes(filters.disc)) return false;
     if (filters.cat && r.category !== filters.cat) return false;
+    if (filters.lang === "none" && (r.languages || []).length) return false;
+    if (filters.lang && filters.lang !== "none" && !(r.languages || []).includes(filters.lang)) return false;
     if (filters.type && r.rtype !== filters.type) return false;
     if (filters.level && r.level !== filters.level && r.level !== "any") return false;
     return true;
@@ -1668,6 +1686,7 @@ function render() {
             <span class="tag type">${esc(r.rtype)}</span>
             ${r.category ? `<span class="tag cat">${esc(r.category)}</span>` : ""}
             ${r.level && r.level !== "any" ? `<span class="tag level">${esc(r.level)}</span>` : ""}
+            ${(r.languages || []).map(l => `<span class="tag lang">${esc(l)}</span>`).join("")}
             ${(r.disciplines || []).map(d => `<span class="tag">${esc(d)}</span>`).join("")}
             ${matchTag}
             ${r.suggested_by ? `<span class="tag">by ${esc(r.suggested_by)}</span>` : ""}
@@ -1739,11 +1758,14 @@ chipRow("#fieldChips", FIELDS, false);   // multi-select
 chipRow("#stageChips", STAGES, true);
 chipRow("#aiChips", XP_LEVELS, true);
 chipRow("#statsChips", XP_LEVELS, true);
+chipRow("#langChips", LANGUAGES, false); // multi-select, optional
+chipRow("#sLangChips", LANGUAGES, false);
 chipRow("#sDiscChips", FIELDS.filter(f => f !== "Other"), false);
 $("#sType").innerHTML = TYPES.map(t => `<option value="${t}">${TYPE_ICONS[t]} ${t[0].toUpperCase() + t.slice(1)}</option>`).join("");
 $("#sCat").innerHTML = CATEGORIES.map(c => `<option>${esc(c)}</option>`).join("");
 $("#filterCategory").innerHTML += CATEGORIES.map(c => `<option>${esc(c)}</option>`).join("");
 $("#filterDiscipline").innerHTML += FIELDS.map(f => `<option>${esc(f)}</option>`).join("");
+$("#filterLang").innerHTML += LANGUAGES.map(l => `<option>${esc(l)}</option>`).join("") + `<option value="none">No code</option>`;
 $("#filterType").innerHTML += TYPES.map(t => `<option value="${t}">${t[0].toUpperCase() + t.slice(1)}</option>`).join("");
 
 $("#searchBox").oninput = e => { filters.q = e.target.value.toLowerCase(); render(); };
@@ -1751,6 +1773,7 @@ $("#filterCategory").onchange = e => { filters.cat = e.target.value; render(); }
 $("#filterDiscipline").onchange = e => { filters.disc = e.target.value; render(); };
 $("#filterType").onchange = e => { filters.type = e.target.value; render(); };
 $("#filterLevel").onchange = e => { filters.level = e.target.value; render(); };
+$("#filterLang").onchange = e => { filters.lang = e.target.value; render(); };
 $$(".tab").forEach(t => t.onclick = () => {
   $$(".tab").forEach(x => x.classList.remove("active"));
   t.classList.add("active"); sortMode = t.dataset.sort; render();
@@ -1921,7 +1944,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
   const topicsBox = document.createElement("div"); topicsBox.id = "sbTopics";
   const filtersBox = document.createElement("div"); filtersBox.className = "sb-filters";
   sidebar.append(topicsBox, filtersBox);
-  ["filterDiscipline", "filterType", "filterLevel"].forEach(id => filtersBox.append(document.getElementById(id)));
+  ["filterLang", "filterDiscipline", "filterType", "filterLevel"].forEach(id => filtersBox.append(document.getElementById(id)));
   function rebuildTopics() {
     const counts = {};
     resources.forEach(r => { const c = r.category || "Other"; counts[c] = (counts[c] || 0) + 1; });
