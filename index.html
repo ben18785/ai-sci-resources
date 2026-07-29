@@ -625,6 +625,83 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
   border: 1.5px dashed var(--hairline); border-radius: var(--radius);
 }
 
+/* ============ REQUESTS mini-forum ============ */
+#reqView { max-width: 780px; }
+.rq-top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+.rq-top h2 { font-size: 1.3rem; letter-spacing: -.015em; flex: 1; }
+.rq-form {
+  background: color-mix(in oklab, var(--surface) 94%, transparent); backdrop-filter: blur(5px);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 18px; margin-bottom: 18px;
+}
+.rq-form input, .rq-form textarea {
+  width: 100%; font-family: inherit; font-size: .95rem; color: var(--ink);
+  background: var(--surface-2); border: 1px solid var(--hairline);
+  border-radius: 10px; padding: 10px 14px; outline: none; margin-top: 10px;
+}
+.rq-form textarea { resize: vertical; min-height: 64px; }
+.rq-form input:focus, .rq-form textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent); }
+.rq-form .row { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+
+.rq {
+  display: grid; grid-template-columns: auto 1fr; gap: 14px;
+  background: color-mix(in oklab, var(--surface) 94%, transparent); backdrop-filter: blur(5px);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 18px; margin: 10px 0;
+}
+.rq-want { display: flex; flex-direction: column; align-items: center; gap: 2px; align-self: start; }
+.rq-want button {
+  width: 46px; height: 46px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  color: var(--ink-2); font-size: 1.05rem; cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.rq-want button:hover { border-color: var(--accent); color: var(--accent); }
+.rq-want button.on { background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; border-color: transparent; }
+.rq-want .n { font-weight: 800; font-size: .95rem; }
+.rq-want .lbl { font-size: .62rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.rq h3 { font-size: 1rem; line-height: 1.35; cursor: pointer; }
+.rq h3:hover { color: var(--accent); }
+.rq .body-txt { color: var(--ink-2); font-size: .9rem; margin-top: 4px; }
+.rq .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 9px; align-items: center; }
+.rq .meta .tag { font-size: .72rem; }
+.rq-resolved { background: color-mix(in oklab, var(--good) 14%, var(--surface)); color: var(--good-text); border-color: transparent; }
+.rq-open { background: color-mix(in oklab, var(--gold) 16%, var(--surface)); color: var(--ink); border-color: transparent; }
+
+.rq-thread { grid-column: 1 / -1; border-top: 1px solid var(--hairline); margin-top: 6px; padding-top: 12px; }
+.rq-reply { padding: 9px 0; border-bottom: 1px solid color-mix(in oklab, var(--hairline) 55%, transparent); }
+.rq-reply:last-of-type { border-bottom: none; }
+.rq-reply .head { display: flex; gap: 8px; align-items: baseline; }
+.rq-reply .who { font-weight: 700; font-size: .84rem; }
+.rq-reply .when { color: var(--muted); font-size: .74rem; }
+.rq-reply .txt { font-size: .9rem; color: var(--ink-2); margin-top: 3px; }
+.rq-attach {
+  display: flex; gap: 10px; align-items: center;
+  background: var(--surface-2); border: 1px solid var(--hairline);
+  border-radius: 10px; padding: 9px 12px; margin-top: 8px;
+}
+.rq-attach .body { flex: 1; min-width: 0; cursor: pointer; }
+.rq-attach .t { font-weight: 650; font-size: .87rem; }
+.rq-attach .t:hover { color: var(--accent); }
+.rq-attach .sub { display: flex; gap: 5px; margin-top: 3px; flex-wrap: wrap; }
+.rq-attach .sub .tag { font-size: .68rem; padding: 1px 7px; }
+
+.rq-composer { margin-top: 12px; }
+.rq-composer textarea {
+  width: 100%; font-family: inherit; font-size: .9rem; color: var(--ink);
+  background: var(--surface-2); border: 1px solid var(--hairline);
+  border-radius: 10px; padding: 9px 13px; outline: none; resize: vertical; min-height: 52px;
+}
+.rq-composer textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent); }
+.rq-attach-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+.rq-attach-row input {
+  flex: 1; min-width: 200px; font-family: inherit; font-size: .85rem; color: var(--ink);
+  background: var(--surface-2); border: 1px solid var(--hairline);
+  border-radius: 999px; padding: 7px 14px; outline: none;
+}
+.rq-attach-row .hint-s { flex-basis: 100%; font-size: .74rem; color: var(--muted); }
+.rq-empty { text-align: center; color: var(--muted); padding: 44px 20px; border: 1.5px dashed var(--hairline); border-radius: var(--radius); }
+
 </style>
 </head>
 <body>
@@ -918,7 +995,11 @@ const LS = {
   get demoCmtVotes() { try { return JSON.parse(localStorage.getItem("aisci_demo_cvotes")) || {}; } catch { return {}; } },
   set demoCmtVotes(v) { localStorage.setItem("aisci_demo_cvotes", JSON.stringify(v)); },
   get demoPath() { try { return JSON.parse(localStorage.getItem("aisci_demo_path")) || []; } catch { return []; } },
-  set demoPath(v) { localStorage.setItem("aisci_demo_path", JSON.stringify(v)); }
+  set demoPath(v) { localStorage.setItem("aisci_demo_path", JSON.stringify(v)); },
+  get demoReqs() { try { return JSON.parse(localStorage.getItem("aisci_demo_reqs")); } catch { return null; } },
+  set demoReqs(v) { localStorage.setItem("aisci_demo_reqs", JSON.stringify(v)); },
+  get demoReqVotes() { try { return JSON.parse(localStorage.getItem("aisci_demo_rqv")) || []; } catch { return []; } },
+  set demoReqVotes(v) { localStorage.setItem("aisci_demo_rqv", JSON.stringify(v)); }
 };
 
 const LIVE = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
@@ -941,6 +1022,12 @@ let voteAgg30 = {};          // resourceId -> votes in the last 30 days (trendin
 let isAdmin = false;         // current user is a moderator
 let currentDetail = null;    // resource id open in the detail modal
 let myPath = [];             // [{resource_id, position, in_list, done}] for the current user
+let requests = [];           // resource requests (mini-forum)
+let reqReplies = {};         // request_id -> [replies]
+let reqVotes = {};           // request_id -> "want this" total
+let myReqVotes = new Set();  // request ids this user has +1'd
+let pendingReqLink = null;   // request id awaiting a newly added resource
+let resToRequest = {};       // resource_id -> request_id it was contributed for
 
 /* The active academic background: the signed-in profile in live
    mode, or the locally-stored one in demo mode. Normalised so
@@ -1006,7 +1093,7 @@ $("#themeToggle").onclick = () =>
 async function loadData() {
   if (LIVE) {
     const uid = session?.user?.id;
-    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }, { data: cmts }, { data: cvc }, { data: mycv }, { data: v30 }, { data: adm }] = await Promise.all([
+    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }, { data: cmts }, { data: cvc }, { data: mycv }, { data: v30 }, { data: adm }, { data: rqs }, { data: rvc }, { data: mrv }, { data: rrep }] = await Promise.all([
       sb.from("resources").select("*").eq("approved", true).order("created_at", { ascending: true }),
       sb.from("vote_counts").select("*"),
       uid ? sb.from("votes").select("resource_id").eq("voter_id", uid) : Promise.resolve({ data: [] }),
@@ -1015,7 +1102,11 @@ async function loadData() {
       sb.from("comment_vote_counts").select("*"),
       uid ? sb.from("comment_votes").select("comment_id").eq("voter_id", uid) : Promise.resolve({ data: [] }),
       sb.from("vote_counts_30d").select("*"),
-      uid ? sb.from("admins").select("user_id").eq("user_id", uid).maybeSingle() : Promise.resolve({ data: null })
+      uid ? sb.from("admins").select("user_id").eq("user_id", uid).maybeSingle() : Promise.resolve({ data: null }),
+      sb.from("requests").select("*").order("created_at", { ascending: false }),
+      sb.from("request_vote_counts").select("*"),
+      uid ? sb.from("request_votes").select("request_id").eq("voter_id", uid) : Promise.resolve({ data: [] }),
+      sb.from("request_replies").select("*").order("created_at", { ascending: true })
     ]);
     if (e1 || e2 || e3) { toast("Couldn't reach the database — check your Supabase config."); console.error(e1 || e2 || e3); return; }
     resources = res || [];
@@ -1032,6 +1123,15 @@ async function loadData() {
     (v30 || []).forEach(v => voteAgg30[v.resource_id] = v.n);
     isAdmin = Boolean(adm);
     await loadMyPath();
+    requests = rqs || [];
+    reqVotes = {};
+    (rvc || []).forEach(v => reqVotes[v.request_id] = v.n);
+    myReqVotes = new Set((mrv || []).map(v => v.request_id));
+    reqReplies = {}; resToRequest = {};
+    (rrep || []).forEach(rep => {
+      (reqReplies[rep.request_id] ||= []).push(rep);
+      if (rep.resource_id) resToRequest[rep.resource_id] ??= rep.request_id;
+    });
   } else {
     $("#demoBanner").hidden = false;
     resources = [...SEED_RESOURCES, ...LS.demoSuggestions];
@@ -1042,6 +1142,17 @@ async function loadData() {
     comments = {};
     LS.demoComments.forEach(c => (comments[c.resource_id] ||= []).push(c));
     await loadMyPath();
+    // demo requests (seeded examples until the visitor makes changes)
+    const dr = LS.demoReqs ?? defaultDemoReqs();
+    requests = dr.map(({ replies, votes, ...q }) => q);
+    reqReplies = {}; reqVotes = {}; resToRequest = {};
+    dr.forEach(q => {
+      reqReplies[q.id] = q.replies || [];
+      reqVotes[q.id] = q.votes || 0;
+      (q.replies || []).forEach(rep => { if (rep.resource_id) resToRequest[rep.resource_id] ??= q.id; });
+    });
+    myReqVotes = new Set(LS.demoReqVotes);
+    myReqVotes.forEach(id => reqVotes[id] = (reqVotes[id] || 0) + 1);
     const dcv = LS.demoCmtVotes;
     myCmtVotes = new Set(Object.keys(dcv).filter(k => dcv[k]));
     cmtVotes = {};
@@ -1058,6 +1169,118 @@ async function loadData() {
       });
     }
   }
+}
+
+/* ---------- Requests (mini-forum) ---------- */
+function defaultDemoReqs() {
+  const findRes = frag => resources.find(r => r.title.toLowerCase().includes(frag.toLowerCase()));
+  const day = 864e5, now = Date.now();
+  return [
+    { id: "demo-q1", title: "Materials for learning generative AI / diffusion models?",
+      body: "I keep seeing diffusion models in the literature and would love a proper grounding — ideally something with code, not just theory.",
+      author_id: "demo-a", author_name: "Priya (Physical sciences)", resolved: false, created_at: new Date(now - 2 * day).toISOString(), votes: 7,
+      replies: [
+        { id: "demo-p1", author_id: "demo-b", author_name: "Marco (Computer science)", created_at: new Date(now - 1.5 * day).toISOString(),
+          body: "The fast.ai course has a whole part on diffusion from scratch — genuinely the best hands-on intro I know.", resource_id: findRes("fast.ai")?.id || null },
+        { id: "demo-p2", author_id: "demo-c", author_name: "Jenny (Life sciences)", created_at: new Date(now - day).toISOString(),
+          body: "Seconding fast.ai. For the maths side the 3Blue1Brown neural network series ends with transformers.", resource_id: null }
+      ] },
+    { id: "demo-q2", title: "Good intro to Gaussian processes for earth scientists?",
+      body: "Something applied, ideally with spatial examples — most GP material I find is very abstract.",
+      author_id: "demo-d", author_name: "Tom (Earth & environment)", resolved: false, created_at: new Date(now - 5 * day).toISOString(), votes: 4, replies: [] },
+    { id: "demo-q3", title: "Where to start with Bayesian workflow in Python?",
+      body: "PhD student, decent Python, no Bayesian background.",
+      author_id: "demo-e", author_name: "Leah (Medicine & health)", resolved: true, created_at: new Date(now - 9 * day).toISOString(), votes: 5,
+      replies: [
+        { id: "demo-p3", author_id: "demo-f", author_name: "A. Statistician", created_at: new Date(now - 8 * day).toISOString(),
+          body: "Statistical Rethinking, without hesitation — free lectures, and Python ports of all the code.", resource_id: findRes("Statistical Rethinking — R.")?.id || null }
+      ] }
+  ];
+}
+function demoReqStore() { return LS.demoReqs ?? defaultDemoReqs(); }
+function isMineReq(q) { return LIVE ? q.author_id === session?.user?.id : q.author_id === "demo-you"; }
+
+async function reqToggleWant(qid) {
+  if (!requireIdentity()) return;
+  const had = myReqVotes.has(qid);
+  if (LIVE) {
+    if (had) { const { error } = await sb.from("request_votes").delete().eq("request_id", qid).eq("voter_id", session.user.id); if (error) { toast("Couldn't update."); console.error(error); return; } }
+    else { const { error } = await sb.from("request_votes").insert({ request_id: qid, voter_id: session.user.id }); if (error) { toast("Couldn't update."); console.error(error); return; } }
+    await loadData();
+  } else {
+    const v = LS.demoReqVotes;
+    LS.demoReqVotes = had ? v.filter(x => x !== qid) : [...v, qid];
+    await loadData();
+  }
+  render();
+}
+async function reqPost(title, body) {
+  if (!requireIdentity()) return false;
+  if (LIVE) {
+    const { error } = await sb.from("requests").insert({ author_id: session.user.id, author_name: displayName(), title, body: body || null });
+    if (error) { toast("Couldn't post the request."); console.error(error); return false; }
+    await loadData();
+  } else {
+    const l = demoReqStore();
+    l.unshift({ id: "local-" + crypto.randomUUID(), title, body, author_id: "demo-you", author_name: "You (demo)", resolved: false, created_at: new Date().toISOString(), votes: 0, replies: [] });
+    LS.demoReqs = l; await loadData();
+  }
+  render();
+  toast("Request posted — the community can now upvote and reply 🎉");
+  return true;
+}
+async function reqReply(qid, body, resource_id) {
+  if (!requireIdentity()) return false;
+  if (LIVE) {
+    const { error } = await sb.from("request_replies").insert({ request_id: qid, author_id: session.user.id, author_name: displayName(), body: body || null, resource_id: resource_id || null });
+    if (error) { toast("Couldn't post the reply."); console.error(error); return false; }
+    await loadData();
+  } else {
+    const l = demoReqStore();
+    const q = l.find(x => x.id === qid);
+    if (q) (q.replies ||= []).push({ id: "local-" + crypto.randomUUID(), author_id: "demo-you", author_name: "You (demo)", body: body || null, resource_id: resource_id || null, created_at: new Date().toISOString() });
+    LS.demoReqs = l; await loadData();
+  }
+  render();
+  return true;
+}
+async function reqResolve(qid) {
+  if (LIVE) {
+    const { error } = await sb.from("requests").update({ resolved: true }).eq("id", qid);
+    if (error) { toast("Couldn't mark resolved."); console.error(error); return; }
+    await loadData();
+  } else {
+    const l = demoReqStore();
+    const q = l.find(x => x.id === qid);
+    if (q) q.resolved = true;
+    LS.demoReqs = l; await loadData();
+  }
+  render();
+  toast("Marked resolved ✓");
+}
+async function reqDelete(qid) {
+  if (LIVE) {
+    const { error } = await sb.from("requests").delete().eq("id", qid);
+    if (error) { toast("Couldn't delete."); console.error(error); return; }
+    await loadData();
+  } else {
+    LS.demoReqs = demoReqStore().filter(x => x.id !== qid); await loadData();
+  }
+  render();
+  toast("Request removed");
+}
+async function reqDeleteReply(qid, rid) {
+  if (LIVE) {
+    const { error } = await sb.from("request_replies").delete().eq("id", rid);
+    if (error) { toast("Couldn't delete."); console.error(error); return; }
+    await loadData();
+  } else {
+    const l = demoReqStore();
+    const q = l.find(x => x.id === qid);
+    if (q) q.replies = (q.replies || []).filter(r => String(r.id) !== String(rid));
+    LS.demoReqs = l; await loadData();
+  }
+  render();
 }
 
 /* ---------- My path: saved ("like to do") + done state ---------- */
@@ -1404,6 +1627,7 @@ function renderDetail() {
           ${(r.languages || []).map(l => `<span class="tag lang">${esc(l)}</span>`).join("")}
           ${(r.disciplines || []).map(d => `<span class="tag">${esc(d)}</span>`).join("")}
           ${r.suggested_by ? `<span class="tag">by ${esc(r.suggested_by)}</span>` : ""}
+          ${resToRequest[r.id] ? `<button class="chip cmt-toggle" data-goreq="${esc(String(resToRequest[r.id]))}" title="See the request thread">💬 added in answer to a request</button>` : ""}
         </div>
         <p class="desc" style="margin-top:10px;color:var(--ink-2)">${esc(r.description || "")}</p>
         <div class="detail-actions">
@@ -1417,6 +1641,11 @@ function renderDetail() {
     ${commentsHtml(r)}
     <div class="actions"><button class="btn ghost" id="closeDetailBtn">Close</button></div>`;
   bindListHandlers("#detailModal");
+  $$("#detailModal [data-goreq]").forEach(b => b.onclick = () => {
+    const qid = b.dataset.goreq;
+    closeDetail();
+    if (window.openRequestThread) openRequestThread(qid);
+  });
   $("#closeDetailBtn").onclick = closeDetail;
   $("#copyLink").onclick = async () => {
     const link = location.origin + location.pathname + "#r=" + encodeURIComponent(r.id);
@@ -1767,16 +1996,24 @@ async function submitSuggestion() {
     level: $("#sLevel").value,
     suggested_by: $("#sName").value.trim() || (LIVE ? displayName() : null)
   };
+  let newResourceId = null;
   if (LIVE) {
     rec.suggester_id = session.user.id;
-    const { error } = await sb.from("resources").insert(rec);
+    const { data: created, error } = await sb.from("resources").insert(rec).select().single();
     if (error) { toast("Couldn't submit — try again."); console.error(error); return; }
+    newResourceId = created?.id || null;
     await loadData();
   } else {
     rec.id = "local-" + crypto.randomUUID();
     rec.created_at = new Date().toISOString();
+    newResourceId = rec.id;
     LS.demoSuggestions = [...LS.demoSuggestions, rec];
     await loadData();
+  }
+  // contributed in answer to a request? link it into the thread
+  if (pendingReqLink && newResourceId) {
+    await reqReply(pendingReqLink, null, newResourceId);
+    pendingReqLink = null;
   }
   closeOverlay("#suggestOverlay");
   ["#sTitle", "#sUrl", "#sDesc", "#sName"].forEach(s => $(s).value = "");
@@ -1995,7 +2232,7 @@ $("#suggestBtn").onclick = () => { if (requireIdentity()) $("#suggestOverlay").c
 $("#ghLogin").onclick = () => signIn("github");
 $("#ggLogin").onclick = () => signIn("google");
 $("#cancelAuth").onclick = () => closeOverlay("#authOverlay");
-$("#cancelSuggest").onclick = () => closeOverlay("#suggestOverlay");
+$("#cancelSuggest").onclick = () => { pendingReqLink = null; closeOverlay("#suggestOverlay"); };
 $("#submitSuggest").onclick = submitSuggestion;
 $("#editPersona").onclick = openPersona;
 $("#activityBtnDemo").onclick = openActivity;
@@ -2013,6 +2250,7 @@ $$("#graphMode .chip").forEach(c => c.onclick = () => {
 });
 function dismissOverlay(o) {
   if (o.id === "detailOverlay") { closeDetail(); return; }
+  if (o.id === "suggestOverlay") pendingReqLink = null;   // abandoned request-contribution
   o.classList.remove("open");
 }
 $$(".overlay").forEach(o => o.addEventListener("click", e => { if (e.target === o) dismissOverlay(o); }));
@@ -2423,6 +2661,181 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
     if (pathView.style.display !== "none") renderTopicPaths();
     if (myPathView.style.display !== "none") renderMyPath();
   };
+})();
+
+</script>
+<script>
+/* ============ REQUESTS view (mini-forum) ============ */
+(function requestsView() {
+  let sortReq = "wanted";
+  const expanded = new Set();
+  let askOpen = false;
+  const wantOf = q => (reqVotes[q.id] || 0);
+
+  function renderRequests() {
+    const list = requests.slice().sort((a, b) =>
+      sortReq === "wanted"
+        ? wantOf(b) - wantOf(a) || new Date(b.created_at) - new Date(a.created_at)
+        : new Date(b.created_at) - new Date(a.created_at));
+    const openN = list.filter(q => !q.resolved).length;
+
+    reqView.innerHTML = `
+      <div class="rq-top">
+        <h2>Requests</h2>
+        <div class="chip-row">
+          <button type="button" class="chip ${sortReq === "wanted" ? "active" : ""}" data-rqsort="wanted">Most wanted</button>
+          <button type="button" class="chip ${sortReq === "new" ? "active" : ""}" data-rqsort="new">Newest</button>
+        </div>
+        <button class="btn primary" id="rqAskBtn">＋ Ask for a resource</button>
+      </div>
+      <p class="hint" style="margin-bottom:14px">Can't find what you need? Ask the community — others upvote requests they share${openN ? ` (<b>${openN} open</b>)` : ""}, and anyone can reply with advice or contribute a resource directly.</p>
+      ${askOpen ? `
+      <div class="rq-form">
+        <b>What are you looking for?</b>
+        <input id="rqTitle" maxlength="120" placeholder="e.g. Does anyone have good materials for learning generative AI?">
+        <textarea id="rqBody" maxlength="600" placeholder="A little context: your background, what you've already tried, what kind of resource would help…"></textarea>
+        <div class="row">
+          <button class="btn ghost" id="rqCancel">Cancel</button>
+          <button class="btn primary" id="rqPost">Post request</button>
+        </div>
+      </div>` : ""}
+      ${list.length ? list.map(q => {
+        const want = myReqVotes.has(q.id);
+        const reps = reqReplies[q.id] || [];
+        const isOpen = expanded.has(q.id);
+        return `<div class="rq">
+          <div class="rq-want">
+            <button class="${want ? "on" : ""}" data-rqwant="${esc(String(q.id))}" aria-pressed="${want}" title="${want ? "Remove your +1" : "I want this too"}">▲</button>
+            <span class="n">${wantOf(q)}</span><span class="lbl">want this</span>
+          </div>
+          <div>
+            <h3 data-rqx="${esc(String(q.id))}">${esc(q.title)}</h3>
+            ${q.body ? `<div class="body-txt">${esc(q.body)}</div>` : ""}
+            <div class="meta">
+              <span class="tag ${q.resolved ? "rq-resolved" : "rq-open"}">${q.resolved ? "✓ resolved" : "open"}</span>
+              <span class="tag">by ${esc(q.author_name || "Anonymous")}</span>
+              <span class="tag">${esc(fmtWhen(q.created_at))}</span>
+              <button class="chip cmt-toggle" data-rqx="${esc(String(q.id))}">💬 ${reps.length || ""} ${reps.length === 1 ? "reply" : "replies"}</button>
+              ${isMineReq(q) && !q.resolved ? `<button class="mod-btn" data-rqres="${esc(String(q.id))}">✓ mark resolved</button>` : ""}
+              ${(isMineReq(q) || isAdmin) ? `<button class="mod-btn" data-rqdel="${esc(String(q.id))}">${isAdmin && !isMineReq(q) ? "🛡 " : ""}delete</button>` : ""}
+            </div>
+          </div>
+          ${isOpen ? `<div class="rq-thread">
+            ${reps.map(rep => {
+              const res = rep.resource_id ? resources.find(r => String(r.id) === String(rep.resource_id)) : null;
+              const s = res ? scores(res) : null;
+              const mineRep = LIVE ? rep.author_id === session?.user?.id : rep.author_id === "demo-you";
+              return `<div class="rq-reply">
+                <div class="head">
+                  <span class="who">${esc(rep.author_name || "Anonymous")}</span>
+                  <span class="when">${esc(fmtWhen(rep.created_at))}</span>
+                  ${(mineRep || isAdmin) ? `<button class="del" style="margin-left:auto" data-rqrdel="${esc(String(rep.id))}" data-rqof="${esc(String(q.id))}">${mineRep ? "delete" : "🛡 delete"}</button>` : ""}
+                </div>
+                ${rep.body ? `<div class="txt">${esc(rep.body)}</div>` : ""}
+                ${res ? `<div class="rq-attach">
+                  <div class="body" data-tpo="${esc(String(res.id))}">
+                    <div class="t">${TYPE_ICONS[res.rtype] || ""} ${esc(res.title)}</div>
+                    <div class="sub"><span class="tag type">${esc(res.rtype)}</span><span class="tag">▲ ${s.raw} vote${s.raw === 1 ? "" : "s"}</span>${res.level && res.level !== "any" ? `<span class="tag level">${esc(res.level)}</span>` : ""}${!rep.body ? `<span class="tag match">contributed for this request</span>` : ""}</div>
+                  </div>
+                  ${pathStarHtml(res.id)}
+                </div>` : (rep.resource_id ? `<div class="cmt-empty">(attached resource no longer available)</div>` : "")}
+              </div>`;
+            }).join("") || `<div class="cmt-empty">No replies yet — know something that would help?</div>`}
+            <div class="rq-composer">
+              <textarea id="rqReply-${esc(String(q.id))}" maxlength="1000" placeholder="Reply with advice…"></textarea>
+              <div class="rq-attach-row">
+                <input id="rqAttach-${esc(String(q.id))}" list="resDatalist" placeholder="…and/or attach a resource from the library (type to search)">
+                <button class="btn" data-rqnew="${esc(String(q.id))}" title="Contribute a brand-new resource as your answer">＋ Add new resource</button>
+                <button class="btn primary" data-rqsend="${esc(String(q.id))}">Reply</button>
+              </div>
+            </div>
+          </div>` : ""}
+        </div>`;
+      }).join("") : `<div class="rq-empty">No requests yet — be the first to ask the community for a resource.</div>`}
+      <datalist id="resDatalist">${resources.map(r => `<option value="${esc(r.title)}">`).join("")}</datalist>`;
+
+    /* wiring */
+    reqView.querySelectorAll("[data-rqsort]").forEach(b => b.onclick = () => { sortReq = b.dataset.rqsort; renderRequests(); });
+    const ask = reqView.querySelector("#rqAskBtn");
+    if (ask) ask.onclick = () => {
+      if (!requireIdentity()) return;
+      askOpen = true; renderRequests();
+      reqView.querySelector("#rqTitle")?.focus();
+    };
+    const cancel = reqView.querySelector("#rqCancel");
+    if (cancel) cancel.onclick = () => { askOpen = false; renderRequests(); };
+    const post = reqView.querySelector("#rqPost");
+    if (post) post.onclick = async () => {
+      const title = reqView.querySelector("#rqTitle").value.trim();
+      if (!title) { toast("Give your request a title."); return; }
+      if (await reqPost(title, reqView.querySelector("#rqBody").value.trim())) askOpen = false;
+    };
+    reqView.querySelectorAll("[data-rqwant]").forEach(b => b.onclick = () => reqToggleWant(b.dataset.rqwant));
+    reqView.querySelectorAll("[data-rqx]").forEach(el => el.onclick = () => {
+      expanded.has(el.dataset.rqx) ? expanded.delete(el.dataset.rqx) : expanded.add(el.dataset.rqx);
+      renderRequests();
+    });
+    reqView.querySelectorAll("[data-rqres]").forEach(b => b.onclick = () => reqResolve(b.dataset.rqres));
+    reqView.querySelectorAll("[data-rqdel]").forEach(b => b.onclick = () => {
+      if (confirm("Delete this request and its replies?")) reqDelete(b.dataset.rqdel);
+    });
+    reqView.querySelectorAll("[data-rqrdel]").forEach(b => b.onclick = () => {
+      if (confirm("Delete this reply?")) reqDeleteReply(b.dataset.rqof, b.dataset.rqrdel);
+    });
+    reqView.querySelectorAll("[data-rqsend]").forEach(b => b.onclick = async () => {
+      const qid = b.dataset.rqsend;
+      const txt = reqView.querySelector(`#rqReply-${CSS.escape(qid)}`).value.trim();
+      const attachTitle = reqView.querySelector(`#rqAttach-${CSS.escape(qid)}`).value.trim();
+      const res = attachTitle ? resources.find(r => r.title.toLowerCase() === attachTitle.toLowerCase()) : null;
+      if (attachTitle && !res) { toast("Couldn't find that resource — pick one from the suggestions."); return; }
+      if (!txt && !res) { toast("Write a reply or attach a resource."); return; }
+      if (await reqReply(qid, txt, res ? res.id : null)) toast("Reply posted 💬");
+    });
+    reqView.querySelectorAll("[data-rqnew]").forEach(b => b.onclick = () => {
+      if (!requireIdentity()) return;
+      pendingReqLink = b.dataset.rqnew;
+      $("#suggestOverlay").classList.add("open");
+      toast("Add the resource — it'll be linked to this request as your answer.");
+    });
+    reqView.querySelectorAll("[data-tpo]").forEach(el => el.onclick = () => openDetail(el.dataset.tpo));
+    reqView.querySelectorAll("[data-tps]").forEach(b => b.onclick = e => { e.stopPropagation(); pathToggleSave(b.dataset.tps); });
+  }
+
+  /* deep entry from a resource's "added in answer to a request" badge */
+  window.openRequestThread = function (qid) {
+    expanded.add(String(qid));
+    switchView("req");
+    reqView.querySelector(`[data-rqx="${CSS.escape(String(qid))}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  /* ---- register as a sixth view ---- */
+  const reqView = document.createElement("div");
+  reqView.id = "reqView"; reqView.style.display = "none";
+  document.getElementById("myPathView").after(reqView);
+
+  const viewBar = document.querySelector(".view-tabs");
+  const btn = document.createElement("button");
+  btn.className = "tab"; btn.dataset.view = "req"; btn.textContent = "Requests";
+  viewBar.insertBefore(btn, [...viewBar.children].find(t => t.dataset.view === "graph"));
+
+  const origSwitch = window.switchView;
+  window.switchView = function (v) {
+    if (v === "req") {
+      viewBar.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.view === "req"));
+      ["shelvesView", "browseLayout", "graphView", "pathView", "myPathView"].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = "none";
+      });
+      reqView.style.display = "";
+      renderRequests();
+    } else {
+      reqView.style.display = "none";
+      origSwitch(v);
+    }
+  };
+  viewBar.querySelectorAll(".tab").forEach(t => t.onclick = () => switchView(t.dataset.view));
+
+  const origRender = window.render;
+  window.render = function () { origRender(); if (reqView.style.display !== "none") renderRequests(); };
 })();
 
 </script>
