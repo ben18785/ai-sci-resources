@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI in Science — top resources</title>
+<style>
+:root { color-scheme: dark; --page:#0d0d0d; --surface:#1a1a19; --surface-2:#242422; --ink:#fff; --ink-2:#c3c2b7; --muted:#898781; --hairline:#2c2c2a; --accent:#3987e5; }
+:root[data-theme="light"] { color-scheme: light; --page:#f9f9f7; --surface:#fcfcfb; --surface-2:#f0efec; --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781; --hairline:#e1e0d9; --accent:#2a78d6; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--page); color:var(--ink); padding:14px; font-size:14px; }
+h1 { font-size:.95rem; letter-spacing:-.01em; margin-bottom:2px; }
+.sub { color:var(--muted); font-size:.74rem; margin-bottom:10px; }
+.row { display:flex; gap:10px; align-items:center; background:var(--surface); border:1px solid var(--hairline); border-radius:10px; padding:8px 12px; margin:6px 0; text-decoration:none; color:inherit; transition:border-color .15s; }
+.row:hover { border-color:var(--accent); }
+.rank { color:var(--muted); font-weight:800; font-size:.8rem; min-width:1.4em; }
+.t { flex:1; font-weight:600; font-size:.86rem; line-height:1.3; }
+.v { color:var(--muted); font-size:.78rem; font-weight:700; white-space:nowrap; }
+.foot { margin-top:10px; font-size:.72rem; color:var(--muted); }
+.foot a { color:var(--accent); text-decoration:none; }
+.err { color:var(--muted); font-size:.85rem; padding:20px 0; text-align:center; }
+</style>
+</head>
+<body>
+<h1 id="wTitle">Top resources</h1>
+<div class="sub" id="wSub"></div>
+<div id="wList"><div class="err">Loading…</div></div>
+<div class="foot">From <a id="wLink" href="https://ben18785.github.io/ai-sci-resources/" target="_blank" rel="noopener">AI in Science — community learning resources</a></div>
+<script>
+/* Embeddable widget. Params:
+     ?topic=Machine%20learning   filter to one topic (omit for all)
+     &n=10                       how many rows (default 10, max 25)
+     &theme=light                light mode (default dark)
+   Embed:
+     <iframe src=".../widget.html?topic=Machine%20learning" width="100%" height="480" style="border:0"></iframe>
+*/
+const SUPABASE_URL = "https://sxvovqhvlsnvvufcapii.supabase.co";
+const KEY = "sb_publishable_ss6-RIM6aqrzY_nq1ijklQ_kpINsZs1";
+const SITE = "https://ben18785.github.io/ai-sci-resources/";
+const P = new URLSearchParams(location.search);
+if (P.get("theme") === "light") document.documentElement.dataset.theme = "light";
+const topic = P.get("topic") || "";
+const N = Math.min(25, Math.max(1, parseInt(P.get("n") || "10", 10) || 10));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+(async () => {
+  try {
+    const q = topic ? `&category=eq.${encodeURIComponent(topic)}` : "";
+    const [res, vc] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/resources?select=id,title,url,rtype,category&approved=eq.true${q}&apikey=${KEY}`).then(r => r.json()),
+      fetch(`${SUPABASE_URL}/rest/v1/vote_counts?select=resource_id,n&apikey=${KEY}`).then(r => r.json())
+    ]);
+    const votes = {};
+    vc.forEach(v => votes[v.resource_id] = (votes[v.resource_id] || 0) + v.n);
+    const top = res.map(r => ({ ...r, v: votes[r.id] || 0 })).sort((a, b) => b.v - a.v).slice(0, N);
+    document.getElementById("wTitle").textContent = topic ? `Top ${topic} resources` : "Top resources for learning AI in science";
+    document.getElementById("wSub").textContent = "Ranked by community votes";
+    document.getElementById("wList").innerHTML = top.length ? top.map((r, i) => `
+      <a class="row" href="${SITE}#r=${encodeURIComponent(r.id)}" target="_blank" rel="noopener">
+        <span class="rank">${i + 1}</span>
+        <span class="t">${esc(r.title)}</span>
+        <span class="v">▲ ${r.v}</span>
+      </a>`).join("") : `<div class="err">No resources yet.</div>`;
+  } catch (e) {
+    document.getElementById("wList").innerHTML = `<div class="err">Couldn't load — try again shortly.</div>`;
+  }
+})();
+</script>
+</body>
+</html>

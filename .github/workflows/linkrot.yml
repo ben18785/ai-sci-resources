@@ -1,0 +1,40 @@
+# Weekly link-rot check: pings every resource URL, opens/updates a
+# GitHub issue listing any that look dead. Public data only.
+name: Link rot check
+on:
+  schedule:
+    - cron: '29 6 * * 1'   # Mondays, 06:29 UTC
+  workflow_dispatch: {}
+permissions:
+  issues: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      SUPA: https://sxvovqhvlsnvvufcapii.supabase.co
+      KEY: sb_publishable_ss6-RIM6aqrzY_nq1ijklQ_kpINsZs1
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check links
+        run: |
+          set -e
+          curl -sf "$SUPA/rest/v1/resources?select=title,url&approved=eq.true&url=not.is.null&apikey=$KEY" -H "Range: 0-9999" > res.json
+          : > dead.md
+          jq -r '.[] | [.title, .url] | @tsv' res.json | while IFS=$'\t' read -r TITLE URL; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 20 -A "Mozilla/5.0 (link-check)" "$URL" || echo 000)
+            case "$CODE" in
+              2*|3*|403|429) ;;   # alive (403/429 = bot-blocked, assume fine)
+              *) echo "- [ ] **$TITLE** — $URL (HTTP $CODE)" >> dead.md ;;
+            esac
+          done
+          if [ -s dead.md ]; then
+            BODY=$(printf "Weekly automated check found possibly dead links:\n\n%s\n\n_Fix the URL in Supabase Table Editor → resources, or remove the resource._" "$(cat dead.md)")
+            EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "Link rot report in:title" --json number --jq '.[0].number')
+            if [ -n "$EXISTING" ]; then
+              gh issue edit "$EXISTING" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+            else
+              gh issue create --repo "$GITHUB_REPOSITORY" --title "Link rot report" --body "$BODY"
+            fi
+          else
+            echo "All links healthy."
+          fi

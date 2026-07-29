@@ -1,0 +1,65 @@
+# Weekly FULL database backup → a separate PRIVATE repo.
+# Never write raw tables into the public site repo: profiles, votes and
+# pageviews contain private data.
+#
+# One-off setup:
+#   1. Create a PRIVATE repo, e.g.  ben18785/ai-sci-backup
+#   2. Create a fine-grained PAT with "Contents: read & write" on that repo
+#   3. In THIS repo: Settings → Secrets and variables → Actions → add:
+#        SUPABASE_SERVICE_KEY  (Supabase → Project Settings → API Keys → service_role / secret)
+#        BACKUP_REPO           (e.g. ben18785/ai-sci-backup)
+#        BACKUP_PAT            (the token from step 2)
+name: Weekly database backup
+on:
+  schedule:
+    - cron: '43 4 * * 1'   # Mondays, 04:43 UTC
+  workflow_dispatch: {}
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check secrets are configured
+        id: check
+        env:
+          SK: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          if [ -z "$SK" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; echo "Secrets not set — skipping."; fi
+      - name: Clone backup repo
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          git clone "https://x-access-token:${{ secrets.BACKUP_PAT }}@github.com/${{ secrets.BACKUP_REPO }}.git" backup
+      - name: Export all tables
+        if: steps.check.outputs.skip != 'true'
+        env:
+          SUPA: https://sxvovqhvlsnvvufcapii.supabase.co
+          SK: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          set -e
+          DIR="backup/$(date -u +%F)"
+          mkdir -p "$DIR"
+          for T in resources votes comments comment_votes requests request_votes request_replies profiles my_path pageviews admins flags; do
+            : > "$DIR/$T.json"
+            OFFSET=0
+            while :; do
+              TO=$((OFFSET + 999))
+              curl -sf "$SUPA/rest/v1/$T?select=*" \
+                -H "apikey: $SK" -H "Authorization: Bearer $SK" \
+                -H "Range: $OFFSET-$TO" >> "$DIR/$T.json"
+              echo >> "$DIR/$T.json"
+              LINES=$(tail -1 "$DIR/$T.json" | jq 'length')
+              [ "$LINES" -lt 1000 ] && break
+              OFFSET=$((OFFSET + 1000))
+            done
+            # merge page arrays into one
+            jq -s 'add' "$DIR/$T.json" > "$DIR/$T.tmp" && mv "$DIR/$T.tmp" "$DIR/$T.json"
+            echo "$T: $(jq 'length' "$DIR/$T.json") rows"
+          done
+      - name: Push backup
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          cd backup
+          git config user.name "backup-bot"
+          git config user.email "actions@github.com"
+          git add .
+          git diff --cached --quiet || git commit -m "Backup $(date -u +%F)"
+          git push

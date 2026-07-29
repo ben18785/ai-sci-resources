@@ -373,6 +373,20 @@ select.ctl {
 .mod-btn:hover { text-decoration: underline; }
 
 /* ---------- Toast & misc ---------- */
+.diff-prompt {
+  position: fixed; bottom: 76px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+  padding: 9px 16px; box-shadow: var(--shadow-lg); z-index: 60; font-size: .88rem;
+  max-width: calc(100vw - 40px);
+}
+.diff-prompt[hidden] { display: none !important; }
+.tab-badge {
+  background: var(--warm); color: #fff; border-radius: 999px;
+  padding: 1px 7px; font-size: .7rem; font-weight: 800; vertical-align: 1px;
+}
+.flag-btn { border: none; background: none; color: var(--muted); cursor: pointer; font-size: .78rem; padding: 2px 5px; font-family: inherit; }
+.flag-btn:hover { color: var(--warm); }
 .toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
   background: var(--ink); color: var(--page);
@@ -952,6 +966,14 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
   </div>
 </div>
 
+<div class="diff-prompt" id="diffPrompt" hidden>
+  <span>Nice — how was it?</span>
+  <button type="button" class="chip" data-diff="too easy">Too easy</button>
+  <button type="button" class="chip" data-diff="right level">Right level</button>
+  <button type="button" class="chip" data-diff="too hard">Too hard</button>
+  <button type="button" class="chip" data-diff="">Skip</button>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- Seed data for demo mode (must load before the app script) -->
@@ -1072,6 +1094,8 @@ let reqVotes = {};           // request_id -> "want this" total
 let myReqVotes = new Set();  // request ids this user has +1'd
 let pendingReqLink = null;   // request id awaiting a newly added resource
 let resToRequest = {};       // resource_id -> request_id it was contributed for
+let flagsList = [];          // admin-only: current content reports
+let diffAgg = {};            // resource_id -> {difficulty: n} community feedback
 
 /* The active academic background: the signed-in profile in live
    mode, or the locally-stored one in demo mode. Normalised so
@@ -1137,7 +1161,7 @@ $("#themeToggle").onclick = () =>
 async function loadData() {
   if (LIVE) {
     const uid = session?.user?.id;
-    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }, { data: cmts }, { data: cvc }, { data: mycv }, { data: v30 }, { data: adm }, { data: rqs }, { data: rvc }, { data: mrv }, { data: rrep }] = await Promise.all([
+    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }, { data: cmts }, { data: cvc }, { data: mycv }, { data: v30 }, { data: adm }, { data: rqs }, { data: rvc }, { data: mrv }, { data: rrep }, { data: rdif }, { data: flg }] = await Promise.all([
       sb.from("resources").select("*").eq("approved", true).order("created_at", { ascending: true }),
       sb.from("vote_counts").select("*"),
       uid ? sb.from("votes").select("resource_id").eq("voter_id", uid) : Promise.resolve({ data: [] }),
@@ -1150,7 +1174,9 @@ async function loadData() {
       sb.from("requests").select("*").order("created_at", { ascending: false }),
       sb.from("request_vote_counts").select("*"),
       uid ? sb.from("request_votes").select("request_id").eq("voter_id", uid) : Promise.resolve({ data: [] }),
-      sb.from("request_replies").select("*").order("created_at", { ascending: true })
+      sb.from("request_replies").select("*").order("created_at", { ascending: true }),
+      sb.from("resource_difficulty").select("*"),
+      sb.from("flags").select("*")
     ]);
     if (e1 || e2 || e3) { toast("Couldn't reach the database — check your Supabase config."); console.error(e1 || e2 || e3); return; }
     resources = res || [];
@@ -1176,6 +1202,9 @@ async function loadData() {
       (reqReplies[rep.request_id] ||= []).push(rep);
       if (rep.resource_id) resToRequest[rep.resource_id] ??= rep.request_id;
     });
+    diffAgg = {};
+    (rdif || []).forEach(d => (diffAgg[d.resource_id] ||= {})[d.difficulty] = d.n);
+    flagsList = flg || [];   // RLS: non-admins simply get zero rows
   } else {
     $("#demoBanner").hidden = false;
     resources = [...SEED_RESOURCES, ...LS.demoSuggestions];
@@ -1195,6 +1224,9 @@ async function loadData() {
       reqVotes[q.id] = q.votes || 0;
       (q.replies || []).forEach(rep => { if (rep.resource_id) resToRequest[rep.resource_id] ??= q.id; });
     });
+    diffAgg = {};
+    LS.demoPath.forEach(x => { if (x.difficulty) (diffAgg[x.resource_id] ||= {})[x.difficulty] = ((diffAgg[x.resource_id] || {})[x.difficulty] || 0) + 1; });
+    flagsList = [];
     myReqVotes = new Set(LS.demoReqVotes);
     myReqVotes.forEach(id => reqVotes[id] = (reqVotes[id] || 0) + 1);
     const dcv = LS.demoCmtVotes;
@@ -1327,6 +1359,27 @@ async function reqDeleteReply(qid, rid) {
   render();
 }
 
+/* ---------- Reports (flags) ---------- */
+const flagCount = (type, id) =>
+  flagsList.filter(f => f.target_type === type && String(f.target_id) === String(id)).length;
+async function reportContent(type, id) {
+  if (!requireIdentity()) return;
+  const reason = prompt("Report this to the moderators — anything they should know? (optional)");
+  if (reason === null) return;   // cancelled
+  if (LIVE) {
+    const { error } = await sb.from("flags").insert({
+      target_type: type, target_id: String(id),
+      reporter_id: session.user.id, reason: reason.trim() || null
+    });
+    if (error) {
+      toast(error.code === "23505" ? "You've already reported this." : "Couldn't send the report.");
+      if (error.code !== "23505") console.error(error);
+      return;
+    }
+  }
+  toast("Reported — a moderator will take a look ⚑");
+}
+
 /* ---------- My path: saved ("like to do") + done state ---------- */
 async function loadMyPath() {
   if (LIVE) {
@@ -1369,10 +1422,19 @@ async function pathToggleSave(rid) {
   render();
   toast(had ? "Removed from your path" : "Added to your path ★");
 }
+let diffTarget = null, diffTimer = null;
+function askDifficulty(rid) {
+  diffTarget = rid;
+  $("#diffPrompt").hidden = false;
+  clearTimeout(diffTimer);
+  diffTimer = setTimeout(() => { $("#diffPrompt").hidden = true; }, 9000);
+}
 async function pathToggleDone(rid) {
   if (!requireIdentity()) return;
-  await pathMutate(rid, { done: !isDoneRes(rid) });
+  const willBeDone = !isDoneRes(rid);
+  await pathMutate(rid, { done: willBeDone });
   render();
+  if (willBeDone) askDifficulty(rid);
 }
 async function pathMove(rid, dir) {   // swap position with the neighbour in the starred list
   const listed = myPath.filter(x => x.in_list);
@@ -1558,6 +1620,7 @@ function commentsHtml(r) {
           <span class="when">${esc(fmtWhen(c.created_at))}</span>
           <button class="cmt-up ${voted ? "voted" : ""}" data-cmtvote="${esc(String(c.id))}"
             aria-pressed="${voted}" title="${voted ? "Remove upvote" : "Upvote this comment"}">▲${n ? " " + n : ""}</button>
+          <button class="flag-btn" data-flag="comment:${esc(String(c.id))}" title="Report this comment">⚑${isAdmin && flagCount("comment", c.id) ? flagCount("comment", c.id) : ""}</button>
           ${(isMyComment(c) || isAdmin) ? `<button class="del" data-delcmt="${esc(String(c.id))}" data-res="${esc(String(r.id))}">${isMyComment(c) ? "delete" : "🛡 delete"}</button>` : ""}
         </div>
         <div class="body">${esc(c.body)}</div>
@@ -1602,6 +1665,13 @@ function bindListHandlers(rootSel) {
   });
   $$(rootSel + " [data-tps]").forEach(b => {
     b.onclick = e => { e.stopPropagation(); pathToggleSave(b.dataset.tps); };
+  });
+  $$(rootSel + " [data-flag]").forEach(b => {
+    b.onclick = e => {
+      e.stopPropagation();
+      const [t, id] = b.dataset.flag.split(/:(.+)/);
+      reportContent(t, id);
+    };
   });
   $$(rootSel + " [data-modres]").forEach(b => {
     b.onclick = async () => {
@@ -1674,10 +1744,12 @@ function renderDetail() {
           ${resToRequest[r.id] ? `<button class="chip cmt-toggle" data-goreq="${esc(String(resToRequest[r.id]))}" title="See the request thread">💬 added in answer to a request</button>` : ""}
         </div>
         <p class="desc" style="margin-top:10px;color:var(--ink-2)">${esc(r.description || "")}</p>
+        ${diffAgg[r.id] ? `<div class="pf-since" style="margin-top:8px">Difficulty feedback: ${Object.entries(diffAgg[r.id]).map(([k, n]) => `${n} × ${esc(k)}`).join(" · ")}</div>` : ""}
         <div class="detail-actions">
           ${r.url ? `<a class="btn primary" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">Open resource ↗</a>` : ""}
           <button class="btn" data-tps="${esc(String(r.id))}">${isSaved(r.id) ? "★ In my path" : "☆ Add to my path"}</button>
           <button class="btn" id="copyLink">🔗 Copy link</button>
+          <button class="btn" data-flag="resource:${esc(String(r.id))}">⚑ Report${isAdmin && flagCount("resource", r.id) ? ` (${flagCount("resource", r.id)})` : ""}</button>
           ${isAdmin ? `<button class="btn" data-modres="${esc(String(r.id))}">🛡 Remove</button>` : ""}
         </div>
       </div>
@@ -2020,6 +2092,12 @@ async function submitSuggestion() {
   if (!title || !desc) { toast("Please add a title and a short description."); return; }
   let url = $("#sUrl").value.trim();
   if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+  // duplicate detection: same URL (normalised) or identical title
+  const normUrl = u => (u || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/+$/, "");
+  const dupe = resources.find(x =>
+    (url && x.url && normUrl(x.url) === normUrl(url)) ||
+    x.title.trim().toLowerCase() === title.toLowerCase());
+  if (dupe && !confirm(`This looks like it may already be in the library:\n\n“${dupe.title}”\n\nAdd yours anyway?`)) return;
   // resolve topic: existing choice, or a proposed new one (normalised + deduped)
   let category = $("#sCat").value || null;
   let newTopic = false;
@@ -2280,6 +2358,14 @@ $("#cancelSuggest").onclick = () => { pendingReqLink = null; closeOverlay("#sugg
 $("#submitSuggest").onclick = submitSuggestion;
 $("#editPersona").onclick = openPersona;
 $("#activityBtnDemo").onclick = openActivity;
+$$("#diffPrompt [data-diff]").forEach(b => b.onclick = async () => {
+  $("#diffPrompt").hidden = true;
+  if (b.dataset.diff && diffTarget) {
+    await pathMutate(diffTarget, { difficulty: b.dataset.diff });
+    toast("Thanks — noted 🙏");
+    render();
+  }
+});
 $("#savePersona").onclick = savePersona;
 $("#skipPersona").onclick = () => closeOverlay("#personaOverlay");
 $("#closeActivity").onclick = () => closeOverlay("#activityOverlay");
@@ -2761,6 +2847,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
               <span class="tag">${esc(fmtWhen(q.created_at))}</span>
               <button class="chip cmt-toggle" data-rqx="${esc(String(q.id))}">💬 ${reps.length || ""} ${reps.length === 1 ? "reply" : "replies"}</button>
               ${isMineReq(q) && !q.resolved ? `<button class="mod-btn" data-rqres="${esc(String(q.id))}">✓ mark resolved</button>` : ""}
+              <button class="flag-btn" data-flag="request:${esc(String(q.id))}" title="Report this request">⚑${isAdmin && flagCount("request", q.id) ? flagCount("request", q.id) : ""}</button>
               ${(isMineReq(q) || isAdmin) ? `<button class="mod-btn" data-rqdel="${esc(String(q.id))}">${isAdmin && !isMineReq(q) ? "🛡 " : ""}delete</button>` : ""}
             </div>
           </div>
@@ -2773,7 +2860,8 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
                 <div class="head">
                   <span class="who" data-uid="${esc(String(rep.author_id || ""))}">${esc(rep.author_name || "Anonymous")}</span>
                   <span class="when">${esc(fmtWhen(rep.created_at))}</span>
-                  ${(mineRep || isAdmin) ? `<button class="del" style="margin-left:auto" data-rqrdel="${esc(String(rep.id))}" data-rqof="${esc(String(q.id))}">${mineRep ? "delete" : "🛡 delete"}</button>` : ""}
+                  <button class="flag-btn" style="margin-left:auto" data-flag="reply:${esc(String(rep.id))}" title="Report this reply">⚑${isAdmin && flagCount("reply", rep.id) ? flagCount("reply", rep.id) : ""}</button>
+                  ${(mineRep || isAdmin) ? `<button class="del" data-rqrdel="${esc(String(rep.id))}" data-rqof="${esc(String(q.id))}">${mineRep ? "delete" : "🛡 delete"}</button>` : ""}
                 </div>
                 ${rep.body ? `<div class="txt">${esc(rep.body)}</div>` : ""}
                 ${res ? `<div class="rq-attach">
@@ -2843,6 +2931,11 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
     });
     reqView.querySelectorAll("[data-tpo]").forEach(el => el.onclick = () => openDetail(el.dataset.tpo));
     reqView.querySelectorAll("[data-tps]").forEach(b => b.onclick = e => { e.stopPropagation(); pathToggleSave(b.dataset.tps); });
+    reqView.querySelectorAll("[data-flag]").forEach(b => b.onclick = e => {
+      e.stopPropagation();
+      const [t, id] = b.dataset.flag.split(/:(.+)/);
+      reportContent(t, id);
+    });
   }
 
   /* deep entry from a resource's "added in answer to a request" badge */
@@ -2862,6 +2955,25 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
   btn.className = "tab"; btn.dataset.view = "req"; btn.textContent = "Requests";
   viewBar.insertBefore(btn, [...viewBar.children].find(t => t.dataset.view === "graph"));
 
+  /* in-app reply notifications: badge = replies by others, in threads
+     you started or joined, since you last opened this tab */
+  function updateReqBadge() {
+    const seen = Number(localStorage.getItem("aisci_req_seen") || 0);
+    const uid = LIVE ? session?.user?.id : "demo-you";
+    let n = 0;
+    if (uid) {
+      const myThreads = new Set(requests.filter(q => q.author_id === uid).map(q => String(q.id)));
+      Object.entries(reqReplies).forEach(([qid, reps]) => {
+        if (reps.some(rp => rp.author_id === uid)) myThreads.add(String(qid));
+      });
+      myThreads.forEach(qid => (reqReplies[qid] || []).forEach(rp => {
+        if (rp.author_id !== uid && new Date(rp.created_at).getTime() > seen) n++;
+      }));
+    }
+    btn.innerHTML = n ? `Requests <span class="tab-badge">${n}</span>` : "Requests";
+  }
+  window.updateReqBadge = updateReqBadge;
+
   const origSwitch = window.switchView;
   window.switchView = function (v) {
     if (v === "req") {
@@ -2871,6 +2983,8 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
       });
       reqView.style.display = "";
       renderRequests();
+      localStorage.setItem("aisci_req_seen", String(Date.now()));
+      updateReqBadge();
     } else {
       reqView.style.display = "none";
       origSwitch(v);
@@ -2879,7 +2993,11 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
   viewBar.querySelectorAll(".tab").forEach(t => t.onclick = () => switchView(t.dataset.view));
 
   const origRender = window.render;
-  window.render = function () { origRender(); if (reqView.style.display !== "none") renderRequests(); };
+  window.render = function () {
+    origRender();
+    if (reqView.style.display !== "none") renderRequests();
+    updateReqBadge();
+  };
 })();
 
 </script>
@@ -3182,6 +3300,55 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
   new MutationObserver(decorate).observe(document.body, { childList: true, subtree: true });
 })();
 
+</script>
+<script>
+/* ============ DIGEST (admin tool): copyable weekly summary ============ */
+(function digestFeature() {
+  const ov = document.createElement("div");
+  ov.className = "overlay"; ov.id = "digestOverlay";
+  ov.innerHTML = `<div class="modal wide" role="dialog" aria-modal="true">
+    <h2>Weekly digest</h2>
+    <p class="hint">Markdown summary of the last 7 days — paste it into a mailing list, newsletter, or Slack.</p>
+    <textarea id="digestText" style="width:100%;min-height:320px;margin-top:12px;font-family:ui-monospace,monospace;font-size:.84rem;background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline);border-radius:10px;padding:12px"></textarea>
+    <div class="actions">
+      <button class="btn ghost" id="digestClose">Close</button>
+      <button class="btn primary" id="digestCopy">📋 Copy to clipboard</button>
+    </div>
+  </div>`;
+  document.body.append(ov);
+
+  const SITE = "https://ben18785.github.io/ai-sci-resources/";
+  function buildDigest() {
+    const wk = 7 * 864e5, now = Date.now();
+    const newRes = resources.filter(r => now - new Date(r.created_at).getTime() < wk);
+    const trend = resources.slice().sort((a, b) => trendScore(b) - trendScore(a)).slice(0, 5);
+    const openReqs = requests.filter(q => !q.resolved)
+      .sort((a, b) => (reqVotes[b.id] || 0) - (reqVotes[a.id] || 0)).slice(0, 5);
+    const totalVotes = Object.values(voteAgg).flat().reduce((t, a) => t + a.n, 0);
+    let md = `**AI in Science — community resources digest** (${new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })})\n\n`;
+    if (newRes.length) md += `**New this week (${newRes.length})**\n` + newRes.map(r => `- ${r.title}${r.url ? ` — ${r.url}` : ""}`).join("\n") + "\n\n";
+    md += `**Trending**\n` + trend.map((r, i) => `${i + 1}. ${r.title} (${voteAgg30[r.id] || 0} vote${(voteAgg30[r.id] || 0) === 1 ? "" : "s"} this month) — ${SITE}#r=${encodeURIComponent(r.id)}`).join("\n") + "\n\n";
+    if (openReqs.length) md += `**Open requests — can you help?**\n` + openReqs.map(q => `- \u201C${q.title}\u201D (${reqVotes[q.id] || 0} want this)`).join("\n") + "\n\n";
+    md += `The library now holds ${resources.length} resources with ${totalVotes} votes. Browse, vote, add: ${SITE}`;
+    return md;
+  }
+
+  const btn = document.createElement("button");
+  btn.className = "btn icon ghost"; btn.id = "digestBtn"; btn.textContent = "📋";
+  btn.title = "Weekly digest (moderators)"; btn.hidden = true;
+  document.querySelector(".top-actions").insertBefore(btn, document.getElementById("themeToggle"));
+  btn.onclick = () => { document.getElementById("digestText").value = buildDigest(); ov.classList.add("open"); };
+
+  ov.querySelector("#digestClose").onclick = () => ov.classList.remove("open");
+  ov.querySelector("#digestCopy").onclick = async () => {
+    const t = document.getElementById("digestText");
+    try { await navigator.clipboard.writeText(t.value); toast("Digest copied 📋"); }
+    catch { t.select(); document.execCommand("copy"); toast("Digest copied 📋"); }
+  };
+
+  const origRender = window.render;
+  window.render = function () { origRender(); btn.hidden = !(isAdmin || !LIVE); };
+})();
 </script>
 </body>
 </html>

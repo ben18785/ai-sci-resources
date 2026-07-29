@@ -1,0 +1,34 @@
+# Daily snapshot of public vote counts → snapshots/YYYY-MM-DD.json
+# Public data only (fetched with the public key) — safe in a public repo.
+# Powers future rank-movement charts; costs nothing.
+name: Rank history snapshot
+on:
+  schedule:
+    - cron: '17 5 * * *'   # daily, 05:17 UTC
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    env:
+      SUPA: https://sxvovqhvlsnvvufcapii.supabase.co
+      KEY: sb_publishable_ss6-RIM6aqrzY_nq1ijklQ_kpINsZs1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch and store snapshot
+        run: |
+          set -e
+          mkdir -p snapshots
+          DATE=$(date -u +%F)
+          curl -sf "$SUPA/rest/v1/resources?select=id,title,category&approved=eq.true&apikey=$KEY" -H "Range: 0-9999" > /tmp/res.json
+          curl -sf "$SUPA/rest/v1/vote_counts?select=resource_id,n&apikey=$KEY" -H "Range: 0-9999" > /tmp/vc.json
+          jq -n --arg date "$DATE" --slurpfile r /tmp/res.json --slurpfile v /tmp/vc.json \
+            '{date: $date, resources: $r[0], vote_counts: $v[0]}' > "snapshots/$DATE.json"
+      - name: Commit
+        run: |
+          git config user.name "rank-history-bot"
+          git config user.email "actions@github.com"
+          git add snapshots
+          git diff --cached --quiet || git commit -m "Rank snapshot $(date -u +%F)"
+          git push
