@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI in Science — Community Learning Resources</title>
+<title>The AI in Science Atlas — community-ranked learning resources</title>
 <meta name="description" content="Vote for the best resources for learning about AI in science, personalised to your academic background.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%234a9df0' stroke-width='3.5'%3E%3Cellipse cx='32' cy='32' rx='26' ry='11'/%3E%3Cellipse cx='32' cy='32' rx='26' ry='11' transform='rotate(60 32 32)'/%3E%3Cellipse cx='32' cy='32' rx='26' ry='11' transform='rotate(120 32 32)'/%3E%3C/g%3E%3Ccircle cx='32' cy='32' r='6' fill='%23eb6834'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta property="og:title" content="AI in Science — community learning resources">
+<meta property="og:title" content="The AI in Science Atlas">
+<meta property="og:site_name" content="The AI in Science Atlas">
 <meta property="og:description" content="Upvote the courses, papers, books and tools that helped you most — ranked for your academic background.">
 <meta property="og:image" content="https://ben18785.github.io/ai-sci-resources/og-image.png">
 <meta property="og:url" content="https://ben18785.github.io/ai-sci-resources/">
@@ -117,7 +118,7 @@ body {
   padding: 18px 24px 0;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.01em; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.01em; cursor: pointer; }
 .brand-mark {
   width: 34px; height: 34px; border-radius: 10px;
   background: linear-gradient(135deg, var(--accent), var(--violet));
@@ -767,7 +768,7 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
 <div class="hero">
   <canvas id="constellation" aria-hidden="true"></canvas>
   <div class="topbar">
-    <div class="brand"><span class="brand-mark">⚛</span> AI in Science</div>
+    <div class="brand" id="brandHome" role="button" tabindex="0" title="Back to the start"><span class="brand-mark">⚛</span> The AI in Science Atlas</div>
     <div class="top-actions">
       <a class="btn icon ghost" href="https://github.com/ben18785/ai-sci-resources" target="_blank" rel="noopener"
          title="View on GitHub" aria-label="View this project on GitHub">
@@ -780,7 +781,7 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
   </div>
   <div class="hero-inner">
     <h1>The community-ranked guide to <span class="grad">learning AI for science</span></h1>
-    <p class="sub">Upvote the courses, papers, books and tools that helped you most — and see what researchers with a background like yours found valuable.</p>
+    <p class="sub">Upvote the courses, papers, books and tools that helped you most, and see what researchers with a background like yours found valuable.</p>
     <div class="cta-row">
       <div class="persona" id="personaBar" hidden>
         <span id="personaText"></span>
@@ -2357,6 +2358,13 @@ $("#cancelAuth").onclick = () => closeOverlay("#authOverlay");
 $("#cancelSuggest").onclick = () => { pendingReqLink = null; closeOverlay("#suggestOverlay"); };
 $("#submitSuggest").onclick = submitSuggestion;
 $("#editPersona").onclick = openPersona;
+const goHome = () => {
+  if (window.switchView) switchView("shelves");
+  if (currentDetail) closeDetail();
+  scrollTo({ top: 0, behavior: "smooth" });
+};
+$("#brandHome").onclick = goHome;
+$("#brandHome").onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goHome(); } };
 $("#activityBtnDemo").onclick = openActivity;
 $$("#diffPrompt [data-diff]").forEach(b => b.onclick = async () => {
   $("#diffPrompt").hidden = true;
@@ -2603,7 +2611,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
   /* ---- sticky header ---- */
   const sticky = document.createElement("div"); sticky.id = "stickyBar";
   sticky.innerHTML = `
-    <span class="brand"><span class="brand-mark">⚛</span> AI in Science</span>
+    <span class="brand"><span class="brand-mark">⚛</span> The AI in Science Atlas</span>
     <input type="search" id="stickySearch" placeholder="Search resources…" aria-label="Search">
     <button class="btn primary" id="stickySuggest">＋ Add</button>`;
   document.body.append(sticky);
@@ -2615,6 +2623,10 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
     render();
   };
   sticky.querySelector("#stickySuggest").onclick = () => document.getElementById("suggestBtn").click();
+  sticky.querySelector(".brand").onclick = () => {
+    if (window.switchView) switchView("shelves");
+    scrollTo({ top: 0, behavior: "smooth" });
+  };
   addEventListener("scroll", () => sticky.classList.toggle("show", scrollY > 420), { passive: true });
 
   /* ---- cosmos: resize the (now full-page) starfield ---- */
@@ -2681,7 +2693,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
     pathView.innerHTML = `
       <div class="mp-header" style="margin-bottom:26px">
         <h2 style="font-size:1.3rem">Pathways by topic</h2>
-        <div class="mp-sub">The community's route through each topic: best beginner → intermediate → advanced picks${hasPersona ? `, ranked by votes from backgrounds like yours (<b>${esc(p.fields.join(" & "))}</b>). The highlighted stage matches the experience level you gave — your suggested entry point` : ""}. ☆ saves a resource to <b>My path</b>.</div>
+        <div class="mp-sub">The community's route through each topic: best beginner → intermediate → advanced picks${hasPersona ? `, ranked by votes from backgrounds like yours (<b>${esc(p.fields.join(" & "))}</b>). The highlighted stage matches the experience level you gave, indicating your suggested entry point` : ""}. ☆ saves a resource to <b>My path</b>.</div>
       </div>
       ${topics.length ? topics.map(t => `
         <section class="tp-topic">
@@ -3219,7 +3231,8 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
     };
     el("pubSave").onclick = async () => {
       const v = collect();
-      const avatar_url = pendingAvatar !== undefined ? pendingAvatar : curSettings().avatar_url;
+      let avatar_url = pendingAvatar !== undefined ? pendingAvatar : curSettings().avatar_url;
+      if (LIVE) avatar_url = avatar_url || oauthAvatar();   // no upload → persist the sign-in avatar
       if (LIVE) {
         const rec = { ...v, pub_name: v.pub_name || null, institution: v.institution || null,
           pub_email: v.pub_email || null, blurb: v.blurb || null, avatar_url };
@@ -3325,7 +3338,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
     const openReqs = requests.filter(q => !q.resolved)
       .sort((a, b) => (reqVotes[b.id] || 0) - (reqVotes[a.id] || 0)).slice(0, 5);
     const totalVotes = Object.values(voteAgg).flat().reduce((t, a) => t + a.n, 0);
-    let md = `**AI in Science — community resources digest** (${new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })})\n\n`;
+    let md = `**The AI in Science Atlas — weekly digest** (${new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })})\n\n`;
     if (newRes.length) md += `**New this week (${newRes.length})**\n` + newRes.map(r => `- ${r.title}${r.url ? ` — ${r.url}` : ""}`).join("\n") + "\n\n";
     md += `**Trending**\n` + trend.map((r, i) => `${i + 1}. ${r.title} (${voteAgg30[r.id] || 0} vote${(voteAgg30[r.id] || 0) === 1 ? "" : "s"} this month) — ${SITE}#r=${encodeURIComponent(r.id)}`).join("\n") + "\n\n";
     if (openReqs.length) md += `**Open requests — can you help?**\n` + openReqs.map(q => `- \u201C${q.title}\u201D (${reqVotes[q.id] || 0} want this)`).join("\n") + "\n\n";

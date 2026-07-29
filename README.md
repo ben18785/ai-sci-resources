@@ -1,4 +1,4 @@
-# AI in Science — community learning resources
+# The AI in Science Atlas
 
 **Live site: [ben18785.github.io/ai-sci-resources](https://ben18785.github.io/ai-sci-resources/)**
 
