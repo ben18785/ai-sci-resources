@@ -653,6 +653,39 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
   border: 1.5px dashed var(--hairline); border-radius: var(--radius);
 }
 
+/* ---- multiple paths: switcher + picker ---- */
+.mpaths { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 22px; }
+.ptab {
+  background: var(--surface); border: 1px solid var(--hairline); border-radius: 999px;
+  padding: 7px 16px; color: var(--ink-2); font: inherit; font-size: .84rem; font-weight: 600;
+  cursor: pointer; display: inline-flex; gap: 8px; align-items: center;
+  transition: border-color .15s, color .15s;
+}
+.ptab:hover { border-color: var(--accent); color: var(--ink); }
+.ptab.active { border-color: var(--accent); color: var(--ink); background: color-mix(in oklab, var(--accent) 14%, var(--surface)); }
+.ptab .pc { font-size: .7rem; color: var(--muted); font-weight: 700; }
+.ptab.active .pc { color: var(--accent); }
+.ptab.new { border-style: dashed; color: var(--muted); }
+.ptab.new:hover { color: var(--accent); }
+.mp-actions { margin-top: 8px; }
+.mp-actions button { background: none; border: none; color: var(--muted); font: inherit; font-size: .76rem; cursor: pointer; padding: 0; }
+.mp-actions button:hover { color: var(--warm); }
+.path-picker {
+  position: fixed; z-index: 80; min-width: 230px; max-width: 300px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px;
+  padding: 8px; box-shadow: 0 12px 32px rgba(0, 0, 0, .5);
+}
+.path-picker .ph { font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 4px 10px 6px; }
+.path-picker .pk {
+  display: flex; width: 100%; align-items: center; gap: 9px;
+  background: none; border: none; border-radius: 8px; padding: 8px 10px;
+  color: var(--ink-2); font: inherit; font-size: .84rem; cursor: pointer; text-align: left;
+}
+.path-picker .pk:hover { background: var(--surface); color: var(--ink); }
+.path-picker .pk .in { margin-left: auto; font-size: .72rem; color: var(--good, #4ade80); }
+.path-picker .pk.newp { color: var(--muted); border-top: 1px solid var(--hairline); border-radius: 0 0 8px 8px; margin-top: 4px; padding-top: 10px; }
+.path-picker .pk.newp:hover { color: var(--accent); }
+
 /* ============ REQUESTS mini-forum ============ */
 #reqView { max-width: 780px; }
 .rq-top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
@@ -1080,6 +1113,10 @@ const LS = {
   set demoCmtVotes(v) { localStorage.setItem("aisci_demo_cvotes", JSON.stringify(v)); },
   get demoPath() { try { return JSON.parse(localStorage.getItem("aisci_demo_path")) || []; } catch { return []; } },
   set demoPath(v) { localStorage.setItem("aisci_demo_path", JSON.stringify(v)); },
+  get demoPaths() { try { return JSON.parse(localStorage.getItem("aisci_demo_paths")) || []; } catch { return []; } },
+  set demoPaths(v) { localStorage.setItem("aisci_demo_paths", JSON.stringify(v)); },
+  get demoPathItems() { try { return JSON.parse(localStorage.getItem("aisci_demo_path_items")) || []; } catch { return []; } },
+  set demoPathItems(v) { localStorage.setItem("aisci_demo_path_items", JSON.stringify(v)); },
   get demoReqs() { try { return JSON.parse(localStorage.getItem("aisci_demo_reqs")); } catch { return null; } },
   set demoReqs(v) { localStorage.setItem("aisci_demo_reqs", JSON.stringify(v)); },
   get demoReqVotes() { try { return JSON.parse(localStorage.getItem("aisci_demo_rqv")) || []; } catch { return []; } },
@@ -1105,7 +1142,9 @@ let myCmtVotes = new Set();  // commentIds (string) this user has upvoted
 let voteAgg30 = {};          // resourceId -> votes in the last 30 days (trending)
 let isAdmin = false;         // current user is a moderator
 let currentDetail = null;    // resource id open in the detail modal
-let myPath = [];             // [{resource_id, position, in_list, done}] for the current user
+let myPath = [];             // [{resource_id, position, in_list, done, difficulty}] for the current user (done-ticks live here)
+let myPaths = [];            // [{id, name, position}] — the user's named paths
+let pathItems = [];          // [{path_id, resource_id, position}] — membership per path
 let requests = [];           // resource requests (mini-forum)
 let reqReplies = {};         // request_id -> [replies]
 let reqVotes = {};           // request_id -> "want this" total
@@ -1416,26 +1455,152 @@ async function reportContent(type, id) {
   toast("Reported — a moderator will take a look ⚑");
 }
 
-/* ---------- My path: saved ("like to do") + done state ---------- */
+/* ---------- My path(s): named paths + saved items + done state ---------- */
 async function loadMyPath() {
   if (LIVE) {
-    if (!session) { myPath = []; return; }
-    const { data } = await sb.from("my_path").select("*")
-      .eq("user_id", session.user.id).order("position");
-    myPath = data || [];
+    if (!session) { myPath = []; myPaths = []; pathItems = []; return; }
+    const [{ data: mp }, { data: ps }, { data: pi }] = await Promise.all([
+      sb.from("my_path").select("*").eq("user_id", session.user.id).order("position"),
+      sb.from("paths").select("*").eq("user_id", session.user.id).order("position"),
+      sb.from("path_items").select("*").order("position")   // RLS limits rows to the user's own paths
+    ]);
+    myPath = mp || []; myPaths = ps || []; pathItems = pi || [];
   } else {
     myPath = LS.demoPath.slice().sort((a, b) => a.position - b.position);
+    // one-time demo migration: old single-path stars → a default named path
+    if (!localStorage.getItem("aisci_demo_paths") && myPath.some(x => x.in_list)) {
+      const pid = "dp-" + Math.random().toString(36).slice(2, 10);
+      LS.demoPaths = [{ id: pid, name: pathName(), position: 0 }];
+      LS.demoPathItems = myPath.filter(x => x.in_list)
+        .map(x => ({ path_id: pid, resource_id: x.resource_id, position: x.position }));
+    }
+    myPaths = LS.demoPaths.slice().sort((a, b) => a.position - b.position);
+    pathItems = LS.demoPathItems.slice().sort((a, b) => a.position - b.position);
   }
 }
 const pathRowOf = rid => myPath.find(x => String(x.resource_id) === String(rid));
-const isSaved = rid => Boolean(pathRowOf(rid)?.in_list);
+const isSaved = rid => pathItems.some(x => String(x.resource_id) === String(rid));   // in ANY path
 const isDoneRes = rid => Boolean(pathRowOf(rid)?.done);
 const nextPathPos = () => (myPath.length ? Math.max(...myPath.map(x => x.position)) : 0) + 1;
+
+let curPathId = localStorage.getItem("aisci_cur_path") || null;
+function curPath() {
+  if (!myPaths.length) return null;
+  return myPaths.find(p => String(p.id) === String(curPathId)) || myPaths[0];
+}
+function setCurPath(id) { curPathId = String(id); localStorage.setItem("aisci_cur_path", curPathId); }
+const itemsOf = pid => pathItems.filter(x => String(x.path_id) === String(pid));
+const inPath = (pid, rid) => itemsOf(pid).some(x => String(x.resource_id) === String(rid));
+const nextItemPos = pid => { const l = itemsOf(pid); return (l.length ? Math.max(...l.map(x => x.position)) : 0) + 1; };
+
 function pathStarHtml(rid) {
   const s = isSaved(rid);
   return `<button class="save-s ${s ? "on" : ""}" data-tps="${esc(String(rid))}" aria-pressed="${s}"
-    title="${s ? "Remove from my path" : "Add to my path (like to do)"}">${s ? "★" : "☆"}</button>`;
+    title="${s ? "In a path — click to manage" : "Add to a path (like to do)"}">${s ? "★" : "☆"}</button>`;
 }
+
+/* ---- path CRUD ---- */
+async function createPath(name) {
+  name = (name || "").trim().slice(0, 60);
+  if (!name) return null;
+  let pid;
+  if (LIVE) {
+    const pos = (myPaths.length ? Math.max(...myPaths.map(p => p.position)) : 0) + 1;
+    const { data, error } = await sb.from("paths")
+      .insert({ user_id: session.user.id, name, position: pos }).select().single();
+    if (error || !data) { toast("Couldn't create the path."); console.error(error); return null; }
+    pid = data.id;
+  } else {
+    pid = "dp-" + Math.random().toString(36).slice(2, 10);
+    LS.demoPaths = [...LS.demoPaths, { id: pid, name, position: myPaths.length + 1 }];
+  }
+  await loadMyPath();
+  setCurPath(pid);
+  return pid;
+}
+async function ensureDefaultPath() {   // first star with no paths yet → make one
+  if (myPaths.length) return curPath().id;
+  return LIVE
+    ? await (async () => {
+        const { data, error } = await sb.from("paths")
+          .insert({ user_id: session.user.id, name: pathName() }).select().single();
+        if (error || !data) { toast("Couldn't create your path."); console.error(error); return null; }
+        await loadMyPath(); return data.id;
+      })()
+    : await (async () => {
+        const pid = "dp-" + Math.random().toString(36).slice(2, 10);
+        LS.demoPaths = [{ id: pid, name: pathName(), position: 0 }];
+        await loadMyPath(); return pid;
+      })();
+}
+async function renamePath(pid, name) {
+  name = (name || "").trim().slice(0, 60);
+  if (!name) return;
+  if (LIVE) await sb.from("paths").update({ name }).eq("id", pid);
+  else LS.demoPaths = LS.demoPaths.map(p => String(p.id) === String(pid) ? { ...p, name } : p);
+  await loadMyPath();
+}
+async function deletePath(pid) {
+  if (LIVE) await sb.from("paths").delete().eq("id", pid);   // path_items cascade; done-ticks stay on my_path
+  else {
+    LS.demoPaths = LS.demoPaths.filter(p => String(p.id) !== String(pid));
+    LS.demoPathItems = LS.demoPathItems.filter(x => String(x.path_id) !== String(pid));
+  }
+  if (String(curPathId) === String(pid)) curPathId = null;
+  await loadMyPath();
+}
+async function pathItemAdd(pid, rid) {
+  rid = String(rid);
+  if (inPath(pid, rid)) return;
+  if (LIVE) await sb.from("path_items").insert({ path_id: pid, resource_id: rid, position: nextItemPos(pid) });
+  else LS.demoPathItems = [...LS.demoPathItems, { path_id: pid, resource_id: rid, position: nextItemPos(pid) }];
+  await loadMyPath();
+}
+async function pathItemRemove(pid, rid) {
+  rid = String(rid);
+  if (LIVE) await sb.from("path_items").delete().eq("path_id", pid).eq("resource_id", rid);
+  else LS.demoPathItems = LS.demoPathItems.filter(x => !(String(x.path_id) === String(pid) && String(x.resource_id) === rid));
+  await loadMyPath();
+}
+
+/* ---- add-to-path picker (shown when the user has 2+ paths) ---- */
+let pickerEl = null;
+function closePathPicker() { if (pickerEl) { pickerEl.remove(); pickerEl = null; } }
+function openPathPicker(rid, btn) {
+  closePathPicker();
+  rid = String(rid);
+  pickerEl = document.createElement("div");
+  pickerEl.className = "path-picker";
+  pickerEl.innerHTML = `<div class="ph">Add to path</div>` +
+    myPaths.map(p => `<button class="pk" data-pk="${esc(String(p.id))}">${esc(p.name)}${inPath(p.id, rid) ? `<span class="in">✓ in path</span>` : ""}</button>`).join("") +
+    `<button class="pk newp">＋ New path…</button>`;
+  document.body.appendChild(pickerEl);
+  const rct = btn?.getBoundingClientRect?.() || { left: innerWidth / 2 - 115, top: innerHeight / 2, bottom: innerHeight / 2 };
+  const w = 230, h = pickerEl.offsetHeight || 160;
+  pickerEl.style.left = Math.max(8, Math.min(innerWidth - w - 8, rct.left - 40)) + "px";
+  pickerEl.style.top = (rct.bottom + h + 12 > innerHeight ? Math.max(8, rct.top - h - 8) : rct.bottom + 6) + "px";
+  pickerEl.querySelectorAll("[data-pk]").forEach(b => b.onclick = async e => {
+    e.stopPropagation();
+    const pid = b.dataset.pk;
+    const p = myPaths.find(x => String(x.id) === String(pid));
+    const had = inPath(pid, rid);
+    if (had) await pathItemRemove(pid, rid); else await pathItemAdd(pid, rid);
+    closePathPicker(); render();
+    toast(had ? `Removed from “${p.name}”` : `Added to “${p.name}” ★`);
+  });
+  pickerEl.querySelector(".newp").onclick = async e => {
+    e.stopPropagation();
+    const name = prompt("Name your new path", "");
+    if (!name || !name.trim()) { closePathPicker(); return; }
+    const pid = await createPath(name);
+    if (pid) await pathItemAdd(pid, rid);
+    closePathPicker(); render();
+    if (pid) toast(`Created “${name.trim().slice(0, 60)}” ★`);
+  };
+}
+document.addEventListener("click", e => {
+  if (pickerEl && !e.target.closest(".path-picker")) closePathPicker();
+}, true);
 async function pathMutate(rid, patch) {   // upsert-style change to one row
   rid = String(rid);
   const row = pathRowOf(rid);
@@ -1451,10 +1616,13 @@ async function pathMutate(rid, patch) {   // upsert-style change to one row
   }
   await loadMyPath();
 }
-async function pathToggleSave(rid) {
+async function pathToggleSave(rid, btn) {
   if (!requireIdentity()) return;
-  const had = isSaved(rid);
-  await pathMutate(rid, { in_list: !had, ...(had ? {} : { position: nextPathPos() }) });
+  if (myPaths.length > 1) { openPathPicker(rid, btn); return; }   // several paths → pick one
+  const pid = await ensureDefaultPath();
+  if (!pid) return;
+  const had = inPath(pid, rid);
+  if (had) await pathItemRemove(pid, rid); else await pathItemAdd(pid, rid);
   render();
   toast(had ? "Removed from your path" : "Added to your path ★");
 }
@@ -1472,27 +1640,30 @@ async function pathToggleDone(rid) {
   render();
   if (willBeDone) askDifficulty(rid);
 }
-async function pathMove(rid, dir) {   // swap position with the neighbour in the starred list
-  const listed = myPath.filter(x => x.in_list);
+async function pathMove(rid, dir) {   // swap position with the neighbour in the current path
+  const pid = curPath()?.id;
+  if (!pid) return;
+  const listed = itemsOf(pid);
   const i = listed.findIndex(x => String(x.resource_id) === String(rid));
   const j = i + dir;
   if (i < 0 || j < 0 || j >= listed.length) return;
   const a = listed[i], b = listed[j];
-  await pathMutate(a.resource_id, { position: b.position });
-  await pathMutate(b.resource_id, { position: a.position });
+  const pa = a.position === b.position ? b.position + dir : b.position;   // guard equal positions
+  if (LIVE) {
+    await sb.from("path_items").update({ position: pa }).eq("path_id", pid).eq("resource_id", a.resource_id);
+    await sb.from("path_items").update({ position: a.position }).eq("path_id", pid).eq("resource_id", b.resource_id);
+  } else {
+    LS.demoPathItems = LS.demoPathItems.map(x => {
+      if (String(x.path_id) !== String(pid)) return x;
+      if (String(x.resource_id) === String(a.resource_id)) return { ...x, position: pa };
+      if (String(x.resource_id) === String(b.resource_id)) return { ...x, position: a.position };
+      return x;
+    });
+  }
+  await loadMyPath();
   render();
 }
-async function pathRename(name) {
-  name = name.trim().slice(0, 60) || "My learning path";
-  if (LIVE) {
-    if (!session) return;
-    await sb.from("profiles").update({ path_name: name }).eq("id", session.user.id);
-    if (profile) profile.path_name = name;
-  } else {
-    localStorage.setItem("aisci_demo_pathname", name);
-  }
-}
-function pathName() {
+function pathName() {   // legacy single-path name — used to seed the first/default path
   return (LIVE ? profile?.path_name : localStorage.getItem("aisci_demo_pathname")) || "My learning path";
 }
 
@@ -1700,7 +1871,7 @@ function bindListHandlers(rootSel) {
     b.onclick = () => toggleCmtVote(b.dataset.cmtvote);
   });
   $$(rootSel + " [data-tps]").forEach(b => {
-    b.onclick = e => { e.stopPropagation(); pathToggleSave(b.dataset.tps); };
+    b.onclick = e => { e.stopPropagation(); pathToggleSave(b.dataset.tps, b); };
   });
   $$(rootSel + " [data-flag]").forEach(b => {
     b.onclick = e => {
@@ -1783,7 +1954,7 @@ function renderDetail() {
         ${diffAgg[r.id] ? `<div class="pf-since" style="margin-top:8px">Difficulty feedback: ${Object.entries(diffAgg[r.id]).map(([k, n]) => `${n} × ${esc(k)}`).join(" · ")}</div>` : ""}
         <div class="detail-actions">
           ${r.url ? `<a class="btn primary" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">Open resource ↗</a>` : ""}
-          <button class="btn" data-tps="${esc(String(r.id))}">${isSaved(r.id) ? "★ In my path" : "☆ Add to my path"}</button>
+          <button class="btn" data-tps="${esc(String(r.id))}">${isSaved(r.id) ? "★ In a path" : "☆ Add to a path"}</button>
           <button class="btn" id="copyLink">🔗 Copy link</button>
           <button class="btn" data-flag="resource:${esc(String(r.id))}">⚑ Report${isAdmin && flagCount("resource", r.id) ? ` (${flagCount("resource", r.id)})` : ""}</button>
           ${isAdmin ? `<button class="btn" data-modres="${esc(String(r.id))}">🛡 Remove</button>` : ""}
@@ -2744,7 +2915,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
         <div class="t">${TYPE_ICONS[r.rtype] || ""} ${esc(r.title)}</div>
         <div class="ev">${evTags(r, s, p)}</div>
       </div>
-      <button class="save-s ${saved ? "on" : ""}" data-tps="${esc(rid)}" title="${saved ? "Remove from my path" : "Add to my path (like to do)"}">${saved ? "★" : "☆"}</button>
+      <button class="save-s ${saved ? "on" : ""}" data-tps="${esc(rid)}" title="${saved ? "In a path — click to manage" : "Add to a path (like to do)"}">${saved ? "★" : "☆"}</button>
     </div>`;
   };
 
@@ -2799,21 +2970,41 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
     wireRows(pathView);
   }
 
-  /* ---- My path ---- */
+  /* ---- My path (multiple named paths) ---- */
+  async function promptNewPath() {
+    const name = prompt("Name your new path — e.g. Bayesian inference", "");
+    if (!name || !name.trim()) return;
+    if (await createPath(name)) render();
+  }
   function renderMyPath() {
     const p = personaOr();
     if (LIVE && !session) {
-      myPathView.innerHTML = `<div class="mp-empty">Sign in to build your own path — star ☆ any resource to add it, then arrange and work through your course here.<br><br><button class="btn primary" id="mpSignIn">Sign in</button></div>`;
+      myPathView.innerHTML = `<div class="mp-empty">Sign in to build your own paths — star ☆ any resource to add it, then arrange and work through your courses here.<br><br><button class="btn primary" id="mpSignIn">Sign in</button></div>`;
       $("#mpSignIn").onclick = openAuth;
       return;
     }
-    const listed = myPath.filter(x => x.in_list);
-    const dn = listed.filter(x => x.done).length;
+    const cur = curPath();
+    const tabs = myPaths.map(pp => {
+      const its = itemsOf(pp.id);
+      const d = its.filter(x => isDoneRes(x.resource_id)).length;
+      return `<button class="ptab ${cur && String(cur.id) === String(pp.id) ? "active" : ""}" data-ptab="${esc(String(pp.id))}">${esc(pp.name)} <span class="pc">${d}/${its.length}</span></button>`;
+    }).join("");
+    if (!cur) {
+      myPathView.innerHTML = `
+        <div class="mpaths"><button class="ptab new" id="mpNew">＋ New path</button></div>
+        <div class="mp-empty">No paths yet.<br>Tap the ☆ on any resource — in Pathways, Browse, or a resource's detail view — to start your first path, or create one now and fill it as you browse.</div>`;
+      $("#mpNew").onclick = promptNewPath;
+      return;
+    }
+    const listed = itemsOf(cur.id);
+    const dn = listed.filter(x => isDoneRes(x.resource_id)).length;
     const pct = listed.length ? Math.round(dn / listed.length * 100) : 0;
     myPathView.innerHTML = `
+      <div class="mpaths">${tabs}<button class="ptab new" id="mpNew">＋ New path</button></div>
       <div class="mp-header">
-        <input class="mp-name" id="mpName" value="${esc(pathName())}" maxlength="60" title="Click to rename your path">
-        <div class="mp-sub">Your own course, assembled from anything on the site — star ☆ resources to add them, reorder, tick off as you go. Synced to your account.</div>
+        <input class="mp-name" id="mpName" value="${esc(cur.name)}" maxlength="60" title="Click to rename this path">
+        <div class="mp-sub">Your own course, assembled from anything on the site — star ☆ resources to add them, reorder, tick off as you go. Done-ticks are yours, not the path's: a resource you've finished shows as done in every path that contains it. Synced to your account.</div>
+        ${myPaths.length > 1 ? `<div class="mp-actions"><button id="mpDel">Delete this path</button></div>` : ""}
         ${listed.length ? `<div class="pw-bar"><i style="width:${pct}%"></i></div>
         <div class="pw-pct">${dn} of ${listed.length} done · ${pct}%</div>` : ""}
       </div>
@@ -2822,31 +3013,40 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
         const r = resources.find(x => String(x.id) === rid);
         if (!r) return "";
         const s = scores(r);
-        return `<div class="mp-item ${row.done ? "checked" : ""}">
+        const done = isDoneRes(rid);
+        return `<div class="mp-item ${done ? "checked" : ""}">
           <div class="mp-ctl">
             <button data-mpup="${esc(rid)}" ${i === 0 ? "disabled" : ""} title="Move up">▲</button>
             <button data-mpdn="${esc(rid)}" ${i === listed.length - 1 ? "disabled" : ""} title="Move down">▼</button>
           </div>
           <span class="n">${i + 1}</span>
-          <button class="tick-s ${row.done ? "on" : ""}" data-tpd="${esc(rid)}" title="${row.done ? "Mark not done" : "Mark done"}">✓</button>
+          <button class="tick-s ${done ? "on" : ""}" data-tpd="${esc(rid)}" title="${done ? "Mark not done" : "Mark done"}">✓</button>
           <div class="body" data-tpo="${esc(rid)}">
             <div class="t">${TYPE_ICONS[r.rtype] || ""} ${esc(r.title)}</div>
             <div class="ev">${evTags(r, s, p)}${r.level && r.level !== "any" ? `<span class="tag level">${esc(r.level)}</span>` : ""}</div>
           </div>
-          <button class="mp-x" data-mpx="${esc(rid)}" title="Remove from my path">✕</button>
+          <button class="mp-x" data-mpx="${esc(rid)}" title="Remove from this path">✕</button>
         </div>`;
-      }).join("") : `<div class="mp-empty">Nothing here yet.<br>Tap the ☆ on any resource — in Pathways, Browse, or a resource's detail view — to add it, then arrange your own course here.</div>`}`;
-    $("#mpName")?.addEventListener("change", e => pathRename(e.target.value));
+      }).join("") : `<div class="mp-empty">Nothing in this path yet.<br>Tap the ☆ on any resource — in Pathways, Browse, or a resource's detail view — to add it, then arrange your course here.</div>`}`;
+    $("#mpNew").onclick = promptNewPath;
+    myPathView.querySelectorAll("[data-ptab]").forEach(b => b.onclick = () => { setCurPath(b.dataset.ptab); renderMyPath(); });
+    $("#mpName")?.addEventListener("change", async e => { await renamePath(cur.id, e.target.value); renderMyPath(); });
+    const del = $("#mpDel");
+    if (del) del.onclick = async () => {
+      if (!confirm(`Delete “${cur.name}”? Done-ticks are kept — they belong to you, not the path.`)) return;
+      await deletePath(cur.id);
+      render();
+    };
     myPathView.querySelectorAll("[data-mpup]").forEach(b => b.onclick = () => pathMove(b.dataset.mpup, -1));
     myPathView.querySelectorAll("[data-mpdn]").forEach(b => b.onclick = () => pathMove(b.dataset.mpdn, 1));
-    myPathView.querySelectorAll("[data-mpx]").forEach(b => b.onclick = () => pathToggleSave(b.dataset.mpx));
+    myPathView.querySelectorAll("[data-mpx]").forEach(b => b.onclick = async () => { await pathItemRemove(cur.id, b.dataset.mpx); render(); });
     wireRows(myPathView);
   }
 
   function wireRows(root) {
     root.querySelectorAll("[data-tpd]").forEach(b => b.onclick = () => pathToggleDone(b.dataset.tpd));
     root.querySelectorAll("[data-tpo]").forEach(el => el.onclick = () => openDetail(el.dataset.tpo));
-    root.querySelectorAll("[data-tps]").forEach(b => b.onclick = () => pathToggleSave(b.dataset.tps));
+    root.querySelectorAll("[data-tps]").forEach(b => b.onclick = () => pathToggleSave(b.dataset.tps, b));
   }
 
   /* ---- register views ---- */
@@ -3024,7 +3224,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
       toast("Add the resource — it'll be linked to this request as your answer.");
     });
     reqView.querySelectorAll("[data-tpo]").forEach(el => el.onclick = () => openDetail(el.dataset.tpo));
-    reqView.querySelectorAll("[data-tps]").forEach(b => b.onclick = e => { e.stopPropagation(); pathToggleSave(b.dataset.tps); });
+    reqView.querySelectorAll("[data-tps]").forEach(b => b.onclick = e => { e.stopPropagation(); pathToggleSave(b.dataset.tps, b); });
     reqView.querySelectorAll("[data-flag]").forEach(b => b.onclick = e => {
       e.stopPropagation();
       const [t, id] = b.dataset.flag.split(/:(.+)/);

@@ -27,12 +27,15 @@ await page.addInitScript(() => {
     vote_counts_30d: [ { resource_id: 'r2', n: 3 } ],
     admins: [{ user_id: 'user-1' }],
     my_path: [],
+    paths: [],
+    path_items: [],
     requests: [],
     request_votes: [],
     request_vote_counts: [],
     request_replies: [],
     public_profiles: [],
     resource_difficulty: [],
+    votes_by_day: [ { day: '2026-07-20', n: 3 }, { day: '2026-07-27', n: 1 } ],
     flags: [],
     public_profile_stats: [],
     pageviews: [],
@@ -222,18 +225,52 @@ await page.waitForTimeout(500);
 const dt = await page.evaluate(() => window.__mock.db.resources.find(r => r.title === 'Dedupe Topic Resource'));
 console.log('Existing topic deduped to:', dt && dt.category);
 
-// 8p. My path: star a resource from a Browse card
+// 8p. My path: star a resource from a Browse card (auto-creates a default path)
 await page.click('.card [data-tps]');
 await page.waitForTimeout(500);
-const pr = await page.evaluate(() => window.__mock.db.my_path[0]);
-console.log('Path row saved:', JSON.stringify(pr && { resource_id: pr.resource_id, in_list: pr.in_list, done: pr.done }));
+const pth = await page.evaluate(() => window.__mock.db.paths[0]);
+const pit = await page.evaluate(() => window.__mock.db.path_items[0]);
+console.log('Default path auto-created:', JSON.stringify(pth && { name: pth.name, user_id: pth.user_id }));
+console.log('Path item saved:', JSON.stringify(pit && { resource_id: pit.resource_id }));
 await page.click('.view-tabs .tab[data-view="mypath"]');
 await page.waitForTimeout(400);
+console.log('Path switcher tabs:', (await page.$$('.ptab')).length, '(1 path + new)');
 console.log('My path items:', (await page.$$('.mp-item')).length);
 await page.click('.mp-item [data-tpd]');
 await page.waitForTimeout(400);
-console.log('Done tick persisted:', await page.evaluate(() => window.__mock.db.my_path[0].done));
+console.log('Done tick persisted:', await page.evaluate(() => (window.__mock.db.my_path.find(x => x.done) || {}).done === true));
 console.log('Progress line:', (await page.textContent('.pw-pct')).trim());
+// 8p2. Second named path via "+ New path", then the add-to-path picker
+page.once('dialog', d => d.accept('Generative AI'));
+await page.click('#mpNew');
+await page.waitForTimeout(500);
+console.log('Second path created:', await page.evaluate(() => window.__mock.db.paths.length) === 2);
+console.log('New path is active tab:', (await page.textContent('.ptab.active')).includes('Generative AI'));
+await page.click('.view-tabs .tab[data-view="browse"]');
+await page.waitForTimeout(300);
+const stars = await page.$$('.card [data-tps]');
+await stars[1].click();   // un-starred card → picker should open (2 paths)
+await page.waitForTimeout(300);
+console.log('Add-to-path picker opens:', Boolean(await page.$('.path-picker')));
+console.log('Picker lists both paths + new:', (await page.$$('.path-picker .pk')).length === 3);
+await page.click('.path-picker .pk[data-pk]');   // add to first path
+await page.waitForTimeout(500);
+console.log('Picker add stored:', await page.evaluate(() => window.__mock.db.path_items.length) === 2);
+console.log('Picker closed after choice:', !(await page.$('.path-picker')));
+// 8p3. Delete the empty second path — done-ticks survive
+await page.click('.view-tabs .tab[data-view="mypath"]');
+await page.waitForTimeout(400);
+await page.click('.ptab[data-ptab]');   // switch to first path tab
+await page.waitForTimeout(300);
+console.log('First path shows both items:', (await page.$$('.mp-item')).length === 2);
+const tabs2 = await page.$$('.ptab[data-ptab]');
+await tabs2[1].click();   // switch to the (empty) second path
+await page.waitForTimeout(300);
+page.once('dialog', d => d.accept());
+await page.click('#mpDel');
+await page.waitForTimeout(500);
+console.log('Path deleted, one remains:', await page.evaluate(() => window.__mock.db.paths.length) === 1);
+console.log('Done-tick survived delete:', await page.evaluate(() => window.__mock.db.my_path.some(x => x.done)));
 await page.click('.view-tabs .tab[data-view="path"]');
 await page.waitForTimeout(400);
 console.log('Topic pathways render:', (await page.$$('.tp-topic')).length, 'topic(s)');
@@ -352,6 +389,8 @@ const actText = await page.textContent('#activityBody');
 console.log('Activity shows upvote:', actText.includes('Live Resource Two'));
 console.log('Activity shows suggestion:', actText.includes('Suggested While Signed In'));
 await page.click('#closeActivity');
+console.log('Time chart rendered:', await page.$eval('#timeChart', el => !el.hidden) && Boolean(await page.$('#timeChart svg path')));
+console.log('Time chart total:', (await page.textContent('#timeChart .tc-foot')).trim());
 console.log('Usage line rendered:', (await page.textContent('#usageLine')).includes('Since launch'));
 // 8e. Visitor map
 await page.click('#usageLine [data-map]');
