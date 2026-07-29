@@ -402,7 +402,17 @@ select.ctl {
   color: var(--ink); border-radius: 12px; padding: 10px 16px;
   font-size: .88rem; margin-bottom: 18px;
 }
-.stats-row { display: flex; gap: 26px; margin-top: 26px; flex-wrap: wrap; align-items: flex-start; }
+.hero-panels {
+  display: grid; grid-template-columns: auto minmax(250px, 320px) minmax(250px, 320px);
+  gap: 14px; margin-top: 26px; align-items: stretch; justify-content: start;
+}
+.hp-card {
+  background: color-mix(in oklab, var(--surface) 72%, transparent); backdrop-filter: blur(6px);
+  border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px;
+  display: flex; flex-direction: column;
+}
+.hp-stats { flex-direction: row; gap: 28px; align-items: center; }
+@media (max-width: 980px) { .hero-panels { grid-template-columns: 1fr; justify-content: stretch; } }
 .stat .num { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; }
 .stat .cap { font-size: .8rem; color: var(--muted); font-weight: 600; }
 .usage-line { margin-top: 14px; font-size: .8rem; color: var(--muted); }
@@ -437,17 +447,15 @@ select.ctl {
 #graphBox text { font-family: inherit; pointer-events: none; }
 
 /* ---------- Votes-by-discipline mini chart ---------- */
-.field-chart { margin-left: auto; min-width: 250px; max-width: 330px; flex: 1; }
-.field-chart .fc-title { font-size: .74rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.fc-title { font-size: .74rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
 .fc-row { display: grid; grid-template-columns: 112px 1fr auto; gap: 8px; align-items: center; margin: 3px 0; }
 .fc-row .fc-label { font-size: .76rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fc-row .fc-bar { height: 8px; border-radius: 0 4px 4px 0; background: var(--accent); min-width: 2px; }
 .fc-row .fc-n { font-size: .74rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.field-chart + .field-chart { margin-left: 0; }
-.tc-body svg { width: 100%; height: 74px; display: block; }
-.tc-foot { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); margin-top: 4px; }
+.tc-body { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
+.tc-body svg { width: 100%; height: 72px; display: block; }
+.tc-foot { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); margin-top: 6px; }
 .tc-foot b { color: var(--ink-2); }
-@media (max-width: 760px) { .field-chart { margin-left: 0; } }
 
 /* ---------- Skeleton shimmer ---------- */
 .skel {
@@ -794,13 +802,13 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
         <button class="btn edit" id="activityBtnDemo">My activity</button>
       </div>
     </div>
-    <div class="stats-row">
-      <div style="display:flex;gap:26px;flex-wrap:wrap" id="statsRow"></div>
-      <div class="field-chart" id="fieldChart" hidden>
+    <div class="hero-panels">
+      <div class="hp-card hp-stats" id="statsRow"></div>
+      <div class="hp-card" id="fieldChart" hidden>
         <div class="fc-title">Votes by discipline</div>
         <div id="fieldChartRows"></div>
       </div>
-      <div class="field-chart" id="timeChart" hidden>
+      <div class="hp-card" id="timeChart" hidden>
         <div class="fc-title">Votes over time</div>
         <div class="tc-body"></div>
       </div>
@@ -2333,21 +2341,28 @@ function renderTimeChart() {
   const days = voteDays.slice().sort((a, b) => a.day < b.day ? -1 : 1);
   let cum = 0;
   const pts = days.map(d => ({ t: new Date(d.day).getTime(), c: (cum += d.n) }));
-  const t0 = pts[0].t, t1 = Math.max(Date.now(), pts[pts.length - 1].t);
-  const W = 300, H = 74, P = 4;
-  const x = t => t1 === t0 ? W - P : P + (t - t0) / (t1 - t0) * (W - 2 * P);
-  const y = c => H - P - (c / cum) * (H - 2 * P);
-  const d0 = `${x(t0).toFixed(1)},${(H - P).toFixed(1)}`;
-  let line = "M" + pts.map(p => `${x(p.t).toFixed(1)},${y(p.c).toFixed(1)}`).join("L");
-  if (t1 > pts[pts.length - 1].t) line += `L${(W - P).toFixed(1)},${y(cum).toFixed(1)}`;
-  const area = `M${d0}L` + line.slice(1) + `L${(W - P).toFixed(1)},${(H - P).toFixed(1)}Z`;
+  const firstVote = pts[0].t;
+  const t1 = Math.max(Date.now(), pts[pts.length - 1].t);
+  const t0 = Math.min(firstVote - 864e5, t1 - 13 * 864e5);   // at least a two-week window
+  const W = 300, H = 72, P = 4;
+  const x = t => P + (t - t0) / (t1 - t0) * (W - 2 * P);
+  const y = c => H - P - (c / cum) * (H - 2 * P - 6);
+  // cumulative staircase rising from zero
+  let line = `M${x(t0).toFixed(1)},${y(0).toFixed(1)}`;
+  let prevC = 0;
+  for (const p of pts) {
+    line += `L${x(p.t).toFixed(1)},${y(prevC).toFixed(1)}L${x(p.t).toFixed(1)},${y(p.c).toFixed(1)}`;
+    prevC = p.c;
+  }
+  line += `L${(W - P).toFixed(1)},${y(cum).toFixed(1)}`;
+  const area = line + `L${(W - P).toFixed(1)},${(H - P).toFixed(1)}L${x(t0).toFixed(1)},${(H - P).toFixed(1)}Z`;
   el.querySelector(".tc-body").innerHTML = `
     <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Cumulative votes over time">
       <path d="${area}" fill="color-mix(in oklab, var(--accent) 16%, transparent)"/>
       <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
       <circle cx="${(t1 > pts[pts.length - 1].t ? W - P : x(pts[pts.length - 1].t)).toFixed(1)}" cy="${y(cum).toFixed(1)}" r="3" fill="var(--accent)"/>
     </svg>
-    <div class="tc-foot"><span>since ${new Date(t0).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</span><span><b>${cum}</b> total</span></div>`;
+    <div class="tc-foot"><span>since ${new Date(firstVote).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</span><span><b>${cum}</b> total</span></div>`;
   const svg = el.querySelector("svg");
   svg.onmousemove = e => {
     const r = svg.getBoundingClientRect();
