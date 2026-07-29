@@ -443,6 +443,10 @@ select.ctl {
 .fc-row .fc-label { font-size: .76rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fc-row .fc-bar { height: 8px; border-radius: 0 4px 4px 0; background: var(--accent); min-width: 2px; }
 .fc-row .fc-n { font-size: .74rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.field-chart + .field-chart { margin-left: 0; }
+.tc-body svg { width: 100%; height: 74px; display: block; }
+.tc-foot { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); margin-top: 4px; }
+.tc-foot b { color: var(--ink-2); }
 @media (max-width: 760px) { .field-chart { margin-left: 0; } }
 
 /* ---------- Skeleton shimmer ---------- */
@@ -796,6 +800,10 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
         <div class="fc-title">Votes by discipline</div>
         <div id="fieldChartRows"></div>
       </div>
+      <div class="field-chart" id="timeChart" hidden>
+        <div class="fc-title">Votes over time</div>
+        <div class="tc-body"></div>
+      </div>
     </div>
     <div class="usage-line" id="usageLine"></div>
   </div>
@@ -1098,6 +1106,7 @@ let pendingReqLink = null;   // request id awaiting a newly added resource
 let resToRequest = {};       // resource_id -> request_id it was contributed for
 let flagsList = [];          // admin-only: current content reports
 let diffAgg = {};            // resource_id -> {difficulty: n} community feedback
+let voteDays = [];           // [{day, n}] public daily vote counts (time series)
 
 /* The active academic background: the signed-in profile in live
    mode, or the locally-stored one in demo mode. Normalised so
@@ -1163,7 +1172,7 @@ $("#themeToggle").onclick = () =>
 async function loadData() {
   if (LIVE) {
     const uid = session?.user?.id;
-    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }, { data: cmts }, { data: cvc }, { data: mycv }, { data: v30 }, { data: adm }, { data: rqs }, { data: rvc }, { data: mrv }, { data: rrep }, { data: rdif }, { data: flg }] = await Promise.all([
+    const [{ data: res, error: e1 }, { data: agg, error: e2 }, { data: mine, error: e3 }, { data: prof }, { data: cmts }, { data: cvc }, { data: mycv }, { data: v30 }, { data: adm }, { data: rqs }, { data: rvc }, { data: mrv }, { data: rrep }, { data: rdif }, { data: flg }, { data: vbd }] = await Promise.all([
       sb.from("resources").select("*").eq("approved", true).order("created_at", { ascending: true }),
       sb.from("vote_counts").select("*"),
       uid ? sb.from("votes").select("resource_id").eq("voter_id", uid) : Promise.resolve({ data: [] }),
@@ -1178,7 +1187,8 @@ async function loadData() {
       uid ? sb.from("request_votes").select("request_id").eq("voter_id", uid) : Promise.resolve({ data: [] }),
       sb.from("request_replies").select("*").order("created_at", { ascending: true }),
       sb.from("resource_difficulty").select("*"),
-      sb.from("flags").select("*")
+      sb.from("flags").select("*"),
+      sb.from("votes_by_day").select("*")
     ]);
     if (e1 || e2 || e3) { toast("Couldn't reach the database — check your Supabase config."); console.error(e1 || e2 || e3); return; }
     resources = res || [];
@@ -1207,6 +1217,7 @@ async function loadData() {
     diffAgg = {};
     (rdif || []).forEach(d => (diffAgg[d.resource_id] ||= {})[d.difficulty] = d.n);
     flagsList = flg || [];   // RLS: non-admins simply get zero rows
+    voteDays = vbd || [];
   } else {
     $("#demoBanner").hidden = false;
     resources = [...SEED_RESOURCES, ...LS.demoSuggestions];
@@ -1229,6 +1240,21 @@ async function loadData() {
     diffAgg = {};
     LS.demoPath.forEach(x => { if (x.difficulty) (diffAgg[x.resource_id] ||= {})[x.difficulty] = ((diffAgg[x.resource_id] || {})[x.difficulty] || 0) + 1; });
     flagsList = [];
+    // demo: fabricate a plausible vote history from the total
+    {
+      const totalV = Object.values(voteAgg).flat().reduce((t, a) => t + a.n, 0);
+      voteDays = [];
+      let sd = 5; const rnd2 = () => (sd = (sd * 9301 + 49297) % 233280) / 233280;
+      let remaining = totalV;
+      for (let i = 41; i >= 0 && remaining > 0; i--) {
+        const take = Math.min(remaining, Math.floor(rnd2() * 3));
+        if (take > 0) {
+          voteDays.push({ day: new Date(Date.now() - i * 864e5).toISOString().slice(0, 10), n: take });
+          remaining -= take;
+        }
+      }
+      if (remaining > 0) voteDays.push({ day: new Date().toISOString().slice(0, 10), n: remaining });
+    }
     myReqVotes = new Set(LS.demoReqVotes);
     myReqVotes.forEach(id => reqVotes[id] = (reqVotes[id] || 0) + 1);
     const dcv = LS.demoCmtVotes;
@@ -2284,6 +2310,7 @@ function render() {
   const byField = {};
   Object.values(voteAgg).flat().forEach(a => fieldsOf(a).forEach(f => byField[f] = (byField[f] || 0) + a.n));
   const top = Object.entries(byField).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  renderTimeChart();
   $("#fieldChart").hidden = !top.length;
   if (top.length) {
     const max = top[0][1];
@@ -2296,6 +2323,44 @@ function render() {
   }
   $("#footerNote").textContent = LIVE ? "Live · votes shared with everyone" : "Demo mode · votes stay in this browser";
   refreshTopicOptions();
+}
+
+/* ---------- Cumulative votes-over-time mini chart ---------- */
+function renderTimeChart() {
+  const el = $("#timeChart");
+  if (!voteDays.length) { el.hidden = true; return; }
+  el.hidden = false;
+  const days = voteDays.slice().sort((a, b) => a.day < b.day ? -1 : 1);
+  let cum = 0;
+  const pts = days.map(d => ({ t: new Date(d.day).getTime(), c: (cum += d.n) }));
+  const t0 = pts[0].t, t1 = Math.max(Date.now(), pts[pts.length - 1].t);
+  const W = 300, H = 74, P = 4;
+  const x = t => t1 === t0 ? W - P : P + (t - t0) / (t1 - t0) * (W - 2 * P);
+  const y = c => H - P - (c / cum) * (H - 2 * P);
+  const d0 = `${x(t0).toFixed(1)},${(H - P).toFixed(1)}`;
+  let line = "M" + pts.map(p => `${x(p.t).toFixed(1)},${y(p.c).toFixed(1)}`).join("L");
+  if (t1 > pts[pts.length - 1].t) line += `L${(W - P).toFixed(1)},${y(cum).toFixed(1)}`;
+  const area = `M${d0}L` + line.slice(1) + `L${(W - P).toFixed(1)},${(H - P).toFixed(1)}Z`;
+  el.querySelector(".tc-body").innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Cumulative votes over time">
+      <path d="${area}" fill="color-mix(in oklab, var(--accent) 16%, transparent)"/>
+      <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+      <circle cx="${(t1 > pts[pts.length - 1].t ? W - P : x(pts[pts.length - 1].t)).toFixed(1)}" cy="${y(cum).toFixed(1)}" r="3" fill="var(--accent)"/>
+    </svg>
+    <div class="tc-foot"><span>since ${new Date(t0).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</span><span><b>${cum}</b> total</span></div>`;
+  const svg = el.querySelector("svg");
+  svg.onmousemove = e => {
+    const r = svg.getBoundingClientRect();
+    const tx = t0 + (e.clientX - r.left) / r.width * (t1 - t0);
+    let best = pts[0];
+    for (const p of pts) if (Math.abs(p.t - tx) < Math.abs(best.t - tx)) best = p;
+    const tip = $("#mapTip");
+    tip.textContent = `${best.c} vote${best.c === 1 ? "" : "s"} by ${new Date(best.t).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`;
+    tip.style.display = "block";
+    tip.style.left = Math.min(innerWidth - 200, e.clientX + 12) + "px";
+    tip.style.top = (e.clientY + 14) + "px";
+  };
+  svg.onmouseleave = () => { $("#mapTip").style.display = "none"; };
 }
 
 /* ---------- Wiring ---------- */
