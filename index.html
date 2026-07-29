@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 /* ============================================================
@@ -68,16 +68,12 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   background: var(--page);
   color: var(--ink);
   line-height: 1.55;
   min-height: 100vh;
   transition: background .25s ease, color .25s ease;
-}
-
-h1, h2, h3, .brand, .stat .num, .tab, .btn.primary {
-  font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 /* ---------- Hero ---------- */
@@ -417,8 +413,10 @@ select.ctl {
 
 /* ---------- Constellation graph ---------- */
 #graphBox svg { width: 100%; height: auto; display: block; background: radial-gradient(600px 400px at 50% 40%, color-mix(in oklab, var(--accent) 7%, transparent), transparent 75%); border-radius: 12px; }
-#graphBox .gnode-res { cursor: pointer; transition: opacity .12s; }
+#graphBox .gnode-res { cursor: grab; transition: opacity .12s; }
 #graphBox .gnode-res:hover { opacity: .75; }
+#graphBox .gnode-hub { cursor: grab; }
+#graphBox svg { touch-action: none; }
 #graphBox text { font-family: inherit; pointer-events: none; }
 
 /* ---------- Votes-by-discipline mini chart ---------- */
@@ -510,12 +508,12 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
 
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <div class="tabs" role="tablist" style="margin-right:0">
-      <button class="tab active" data-sort="foryou" role="tab">✨ For you</button>
-      <button class="tab" data-sort="trending" role="tab">🔥 Trending</button>
-      <button class="tab" data-sort="top" role="tab">▲ Most upvoted</button>
-      <button class="tab" data-sort="new" role="tab">🕐 Newest</button>
+      <button class="tab active" data-sort="foryou" role="tab">For you</button>
+      <button class="tab" data-sort="trending" role="tab">Trending</button>
+      <button class="tab" data-sort="top" role="tab">Most upvoted</button>
+      <button class="tab" data-sort="new" role="tab">Newest</button>
     </div>
-    <button class="btn" id="graphBtn" style="margin:18px 0 22px">🕸 Constellation</button>
+    <button class="btn" id="graphBtn" style="margin:18px 0 22px">Constellation</button>
   </div>
 
   <div class="grid" id="resourceGrid" aria-live="polite"></div>
@@ -591,7 +589,7 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
 <div class="overlay" id="graphOverlay">
   <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="graphTitle" style="width:min(860px,100%)">
     <h2 id="graphTitle">The resource constellation</h2>
-    <p class="hint">Each hub is a community; around it orbit the resources that community voted for most (top 5 each, sized by votes). Resources bridging two hubs are valued by both. Hover for details, click a resource to open it.</p>
+    <p class="hint">Each hub is a community; around it orbit the resources that community voted for most (top 5 each, sized by votes). Resources bridging two hubs are valued by both. Hover for details, click a resource to open it — and drag any node to rearrange the constellation.</p>
     <div class="chip-row" id="graphMode" style="margin-top:12px">
       <button type="button" class="chip active" data-gmode="disc">By discipline</button>
       <button type="button" class="chip" data-gmode="topic">By topic</button>
@@ -1231,15 +1229,12 @@ function renderGraph() {
   const box = $("#graphBox");
   if (!hubNames.length) { box.innerHTML = `<div class="cmt-empty">No votes yet — the constellation appears once voting starts.</div>`; return; }
   const W = 820, H = 560, cx = W / 2, cy = H / 2;
-  // deterministic jitter
   let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
-  // hubs on an ellipse
   const hubPos = {};
   hubNames.forEach((h, i) => {
     const ang = (i / hubNames.length) * Math.PI * 2 - Math.PI / 2;
     hubPos[h] = [cx + Math.cos(ang) * (W * .33), cy + Math.sin(ang) * (H * .34)];
   });
-  // resources: start at centroid of their hubs, pulled toward centre, then relax
   const resIds = Object.keys(resTotals);
   const pos = {};
   resIds.forEach(rid => {
@@ -1247,10 +1242,10 @@ function renderGraph() {
     let x = 0, y = 0;
     mine.forEach(e => { x += hubPos[e.hub][0]; y += hubPos[e.hub][1]; });
     x /= mine.length; y /= mine.length;
-    const pull = mine.length > 1 ? .25 : .38;   // shared nodes sit nearer the middle ground
+    const pull = mine.length > 1 ? .25 : .38;
     pos[rid] = [x + (cx - x) * pull + (rnd() - .5) * 90, y + (cy - y) * pull + (rnd() - .5) * 70];
   });
-  for (let it = 0; it < 90; it++) {           // light repulsion between resource nodes
+  for (let it = 0; it < 90; it++) {
     for (let i = 0; i < resIds.length; i++) for (let j = i + 1; j < resIds.length; j++) {
       const [ax, ay] = pos[resIds[i]], [bx, by] = pos[resIds[j]];
       const dx = bx - ax, dy = by - ay, d = Math.max(8, Math.hypot(dx, dy));
@@ -1264,17 +1259,17 @@ function renderGraph() {
   const clamp = ([x, y]) => [Math.min(W - 20, Math.max(20, x)), Math.min(H - 16, Math.max(16, y))];
   resIds.forEach(rid => pos[rid] = clamp(pos[rid]));
   const maxN = Math.max(...edges.map(e => e.n));
-  const lines = edges.map(e => {
+  const lines = edges.map((e, i) => {
     const [hx, hy] = hubPos[e.hub], [rx, ry] = pos[e.rid];
-    return `<line x1="${hx.toFixed(1)}" y1="${hy.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${ry.toFixed(1)}"
+    return `<line data-ei="${i}" x1="${hx.toFixed(1)}" y1="${hy.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${ry.toFixed(1)}"
       stroke="var(--hairline)" stroke-width="${(1 + e.n / maxN * 2).toFixed(1)}" opacity=".8"/>`;
   }).join("");
-  const hubDots = hubNames.map(h => {
+  const hubDots = hubNames.map((h, i) => {
     const [x, y] = hubPos[h];
     const anchor = x < cx - 40 ? "end" : x > cx + 40 ? "start" : "middle";
     const dy = y < cy ? -14 : 24;
-    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="var(--violet)"/>
-      <text x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="${anchor}"
+    return `<circle class="gnode-hub" data-hub="${esc(h)}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="var(--violet)"/>
+      <text data-hublabel="${esc(h)}" x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="${anchor}"
         font-size="12.5" font-weight="700" fill="var(--ink)">${esc(h)}</text>`;
   }).join("");
   const resDots = resIds.map(rid => {
@@ -1283,20 +1278,86 @@ function renderGraph() {
     return `<circle class="gnode-res" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}"
       fill="var(--accent)" opacity=".92" data-grid="${esc(String(rid))}"/>`;
   }).join("");
-  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Graph of communities and their top resources">${lines}${hubDots}${resDots}</svg>`;
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Graph of communities and their top resources. Nodes can be dragged.">${lines}${hubDots}${resDots}</svg>`;
+  const svg = box.querySelector("svg");
   const tip = $("#mapTip");
-  $$("#graphBox .gnode-res").forEach(c => {
-    c.onmousemove = e => {
-      const r = resources.find(x => String(x.id) === c.dataset.grid);
-      const mine = edges.filter(ed => String(ed.rid) === c.dataset.grid);
-      tip.textContent = r ? `${r.title} — ${mine.map(m => `${m.hub}: ${m.n}`).join(" · ")}` : "";
-      tip.style.display = "block";
-      tip.style.left = Math.min(innerWidth - 260, e.clientX + 14) + "px";
-      tip.style.top = (e.clientY + 16) + "px";
-    };
-    c.onmouseleave = () => tip.style.display = "none";
-    c.onclick = () => { tip.style.display = "none"; closeOverlay("#graphOverlay"); openDetail(c.dataset.grid); };
+
+  // element lookups for live updates while dragging
+  const lineEls = [...svg.querySelectorAll("line")];
+  const labelByHub = {}; svg.querySelectorAll("[data-hublabel]").forEach(t => labelByHub[t.dataset.hublabel] = t);
+
+  function moveNode(kind, key, el, nx, ny) {
+    (kind === "res" ? pos : hubPos)[key] = [nx, ny];
+    el.setAttribute("cx", nx); el.setAttribute("cy", ny);
+    edges.forEach((e, i) => {
+      if (kind === "res" ? String(e.rid) === key : e.hub === key) {
+        const L = lineEls[i];
+        if (kind === "res") { L.setAttribute("x2", nx); L.setAttribute("y2", ny); }
+        else { L.setAttribute("x1", nx); L.setAttribute("y1", ny); }
+      }
+    });
+    if (kind === "hub") {
+      const t = labelByHub[key];
+      if (t) {
+        t.setAttribute("x", nx);
+        t.setAttribute("y", ny + (ny < cy ? -14 : 24));
+        t.setAttribute("text-anchor", nx < cx - 40 ? "end" : nx > cx + 40 ? "start" : "middle");
+      }
+    }
+  }
+
+  // dragging (pointer events); a near-still press on a resource = open it
+  let drag = null;
+  const toSvg = e => {
+    const r = svg.getBoundingClientRect();
+    return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H];
+  };
+  svg.addEventListener("pointerdown", e => {
+    const el = e.target.closest("circle");
+    if (!el) return;
+    e.preventDefault();
+    const kind = el.classList.contains("gnode-res") ? "res" : "hub";
+    const key = kind === "res" ? el.dataset.grid : el.dataset.hub;
+    const [x, y] = toSvg(e);
+    const p = (kind === "res" ? pos : hubPos)[key];
+    drag = { el, kind, key, offX: p[0] - x, offY: p[1] - y, moved: 0 };
+    svg.setPointerCapture(e.pointerId);
+    el.style.cursor = "grabbing";
   });
+  svg.addEventListener("pointermove", e => {
+    if (!drag) {
+      const el = e.target.closest("circle.gnode-res");
+      if (el) {
+        const r = resources.find(x => String(x.id) === el.dataset.grid);
+        const mine = edges.filter(ed => String(ed.rid) === el.dataset.grid);
+        tip.textContent = r ? `${r.title} — ${mine.map(m => `${m.hub}: ${m.n}`).join(" · ")}` : "";
+        tip.style.display = "block";
+        tip.style.left = Math.min(innerWidth - 260, e.clientX + 14) + "px";
+        tip.style.top = (e.clientY + 16) + "px";
+      } else tip.style.display = "none";
+      return;
+    }
+    tip.style.display = "none";
+    const [x, y] = toSvg(e);
+    const nx = Math.min(W - 14, Math.max(14, x + drag.offX));
+    const ny = Math.min(H - 12, Math.max(12, y + drag.offY));
+    const p = (drag.kind === "res" ? pos : hubPos)[drag.key];
+    drag.moved += Math.hypot(nx - p[0], ny - p[1]);
+    moveNode(drag.kind, drag.key, drag.el, nx, ny);
+  });
+  svg.addEventListener("pointerup", e => {
+    if (!drag) return;
+    drag.el.style.cursor = "";
+    const { kind, key, moved } = drag;
+    drag = null;
+    svg.releasePointerCapture(e.pointerId);
+    if (kind === "res" && moved < 5) {   // it was a click, not a drag
+      tip.style.display = "none";
+      closeOverlay("#graphOverlay");
+      openDetail(key);
+    }
+  });
+  svg.addEventListener("pointerleave", () => { if (!drag) tip.style.display = "none"; });
 }
 function openGraph() { $("#graphOverlay").classList.add("open"); renderGraph(); }
 
