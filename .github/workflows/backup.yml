@@ -6,7 +6,7 @@
 #   1. Create a PRIVATE repo, e.g.  ben18785/ai-sci-backup
 #   2. Create a fine-grained PAT with "Contents: read & write" on that repo
 #   3. In THIS repo: Settings → Secrets and variables → Actions → add:
-#        SUPABASE_SERVICE_KEY  (Supabase → Project Settings → API Keys → service_role / secret)
+#        SUPABASE_SERVICE_KEY  (Supabase → Project Settings → API Keys → Secret keys → sb_secret_...)
 #        BACKUP_REPO           (e.g. ben18785/ai-sci-backup)
 #        BACKUP_PAT            (the token from step 2)
 name: Weekly database backup
@@ -43,7 +43,7 @@ jobs:
             while :; do
               TO=$((OFFSET + 999))
               curl -sf "$SUPA/rest/v1/$T?select=*" \
-                -H "apikey: $SK" -H "Authorization: Bearer $SK" \
+                -H "apikey: $SK" \
                 -H "Range: $OFFSET-$TO" >> "$DIR/$T.json"
               echo >> "$DIR/$T.json"
               LINES=$(tail -1 "$DIR/$T.json" | jq 'length')
