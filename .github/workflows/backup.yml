@@ -38,20 +38,30 @@ jobs:
           DIR="backup/$(date -u +%F)"
           mkdir -p "$DIR"
           for T in resources votes comments comment_votes requests request_votes request_replies profiles my_path pageviews admins flags; do
-            : > "$DIR/$T.json"
-            OFFSET=0
-            while :; do
+            rm -rf /tmp/pages && mkdir -p /tmp/pages
+            OFFSET=0; PAGE=0
+            while [ "$PAGE" -lt 100 ]; do
               TO=$((OFFSET + 999))
-              curl -sf "$SUPA/rest/v1/$T?select=*" \
-                -H "apikey: $SK" \
-                -H "Range: $OFFSET-$TO" >> "$DIR/$T.json"
-              echo >> "$DIR/$T.json"
-              LINES=$(tail -1 "$DIR/$T.json" | jq 'length')
-              [ "$LINES" -lt 1000 ] && break
-              OFFSET=$((OFFSET + 1000))
+              CODE=$(curl -s -o "/tmp/pages/p$(printf '%03d' $PAGE).json" -w "%{http_code}" \
+                "$SUPA/rest/v1/$T?select=*" -H "apikey: $SK" -H "Range: $OFFSET-$TO")
+              F="/tmp/pages/p$(printf '%03d' $PAGE).json"
+              if [ "$CODE" = "416" ]; then rm -f "$F"; break; fi          # past the end: done
+              if [ "$CODE" != "200" ] && [ "$CODE" != "206" ]; then
+                echo "::error::$T returned HTTP $CODE:"; cat "$F"; echo; exit 1
+              fi
+              if ! jq -e 'type == "array"' "$F" > /dev/null 2>&1; then
+                echo "::error::$T page $PAGE was not a JSON array. First 400 chars:"
+                head -c 400 "$F"; echo; exit 1
+              fi
+              ROWS=$(jq 'length' "$F")
+              PAGE=$((PAGE + 1)); OFFSET=$((OFFSET + 1000))
+              [ "$ROWS" -lt 1000 ] && break
             done
-            # merge page arrays into one
-            jq -s 'add' "$DIR/$T.json" > "$DIR/$T.tmp" && mv "$DIR/$T.tmp" "$DIR/$T.json"
+            if ls /tmp/pages/p*.json > /dev/null 2>&1; then
+              jq -s 'add' /tmp/pages/p*.json > "$DIR/$T.json"
+            else
+              echo "[]" > "$DIR/$T.json"
+            fi
             echo "$T: $(jq 'length' "$DIR/$T.json") rows"
           done
       - name: Push backup
