@@ -535,6 +535,96 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
 /* compact mode: single-line ellipsised titles */
 .grid.compact .card h3 { display: flex; gap: 6px; align-items: baseline; min-width: 0; }
 .grid.compact .card h3 a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ============ PATHWAYS + MY PATH ============ */
+
+/* --- Topic pathways --- */
+.tp-topic { margin: 0 0 34px; }
+.tp-topic > h2 { font-size: 1.15rem; letter-spacing: -.01em; margin-bottom: 2px; }
+.tp-topic .tp-sub { color: var(--muted); font-size: .82rem; margin-bottom: 12px; }
+.tp-flow { display: grid; grid-template-columns: 1fr 26px 1fr 26px 1fr; gap: 8px; align-items: stretch; }
+.tp-arrow { display: grid; place-items: center; color: var(--muted); font-size: 1.1rem; }
+.tp-stage {
+  background: color-mix(in oklab, var(--surface) 94%, transparent); backdrop-filter: blur(5px);
+  border: 1px solid var(--border); border-radius: 12px; padding: 12px;
+  display: flex; flex-direction: column; gap: 8px; min-width: 0;
+}
+.tp-stage.you { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent); }
+.tp-stage-head { display: flex; align-items: center; gap: 8px; }
+.tp-stage-head .lbl { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.tp-you {
+  font-size: .68rem; font-weight: 700; color: #fff;
+  background: linear-gradient(90deg, var(--accent), var(--violet));
+  border-radius: 999px; padding: 2px 9px;
+}
+.tp-none { color: var(--muted); font-size: .8rem; font-style: italic; padding: 6px 2px; }
+.tp-res { display: flex; gap: 8px; align-items: flex-start; border-top: 1px solid color-mix(in oklab, var(--hairline) 55%, transparent); padding-top: 8px; }
+.tp-res:first-of-type { border-top: none; padding-top: 0; }
+.tp-res .body { flex: 1; min-width: 0; cursor: pointer; }
+.tp-res .t { font-weight: 650; font-size: .85rem; line-height: 1.3; }
+.tp-res .t:hover { color: var(--accent); }
+.tp-res .ev { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.tp-res .ev .tag { font-size: .66rem; padding: 1px 7px; }
+.tp-res.checked .t { text-decoration: line-through; text-decoration-color: var(--muted); opacity: .75; }
+.tick-s {
+  flex: none; width: 24px; height: 24px; border-radius: 50%; margin-top: 1px;
+  border: 2px solid var(--hairline); background: var(--surface-2); color: transparent;
+  cursor: pointer; font-size: .75rem; display: grid; place-items: center;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.tick-s:hover { border-color: var(--good); color: var(--good); }
+.tick-s.on { background: var(--good); border-color: var(--good); color: #fff; }
+.save-s {
+  flex: none; border: none; background: none; cursor: pointer; padding: 0 2px;
+  font-size: 1.05rem; color: var(--muted); line-height: 1.4;
+}
+.save-s:hover { color: var(--gold); }
+.save-s.on { color: var(--gold); }
+@media (max-width: 820px) {
+  .tp-flow { grid-template-columns: 1fr; }
+  .tp-arrow { transform: rotate(90deg); padding: 2px 0; }
+}
+
+/* --- My path --- */
+#myPathView { max-width: 720px; }
+.mp-header {
+  background: color-mix(in oklab, var(--surface) 94%, transparent); backdrop-filter: blur(5px);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 20px;
+}
+.mp-header input.mp-name {
+  font-family: inherit; font-size: 1.25rem; font-weight: 800; letter-spacing: -.015em;
+  background: none; border: none; outline: none; color: var(--ink); width: 100%;
+  border-bottom: 1.5px dashed transparent;
+}
+.mp-header input.mp-name:hover, .mp-header input.mp-name:focus { border-bottom-color: var(--hairline); }
+.mp-sub { color: var(--muted); font-size: .82rem; margin-top: 2px; }
+.pw-bar { height: 10px; border-radius: 5px; background: var(--surface-2); margin-top: 12px; overflow: hidden; }
+.pw-bar i { display: block; height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--accent), var(--violet)); transition: width .35s ease; }
+.pw-pct { font-size: .8rem; color: var(--muted); margin-top: 6px; font-weight: 600; }
+.mp-item {
+  display: flex; gap: 10px; align-items: center;
+  background: color-mix(in oklab, var(--surface) 94%, transparent); backdrop-filter: blur(5px);
+  border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; margin: 8px 0;
+}
+.mp-item .n { color: var(--muted); font-weight: 800; font-size: .85rem; min-width: 1.4em; }
+.mp-item .body { flex: 1; min-width: 0; cursor: pointer; }
+.mp-item .t { font-weight: 650; font-size: .92rem; line-height: 1.3; }
+.mp-item .t:hover { color: var(--accent); }
+.mp-item.checked .t { text-decoration: line-through; text-decoration-color: var(--muted); opacity: .75; }
+.mp-item .ev { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.mp-item .ev .tag { font-size: .68rem; padding: 1px 7px; }
+.mp-ctl { display: flex; flex-direction: column; gap: 2px; }
+.mp-ctl button, .mp-x {
+  border: none; background: none; color: var(--muted); cursor: pointer;
+  font-size: .8rem; padding: 1px 5px; font-family: inherit; border-radius: 6px;
+}
+.mp-ctl button:hover { color: var(--accent); background: var(--surface-2); }
+.mp-ctl button:disabled { opacity: .25; cursor: default; }
+.mp-x:hover { color: var(--warm); }
+.mp-empty {
+  text-align: center; color: var(--muted); padding: 44px 20px;
+  border: 1.5px dashed var(--hairline); border-radius: var(--radius);
+}
+
 </style>
 </head>
 <body>
@@ -826,7 +916,9 @@ const LS = {
   get demoComments() { try { return JSON.parse(localStorage.getItem("aisci_demo_cmts")) || []; } catch { return []; } },
   set demoComments(v) { localStorage.setItem("aisci_demo_cmts", JSON.stringify(v)); },
   get demoCmtVotes() { try { return JSON.parse(localStorage.getItem("aisci_demo_cvotes")) || {}; } catch { return {}; } },
-  set demoCmtVotes(v) { localStorage.setItem("aisci_demo_cvotes", JSON.stringify(v)); }
+  set demoCmtVotes(v) { localStorage.setItem("aisci_demo_cvotes", JSON.stringify(v)); },
+  get demoPath() { try { return JSON.parse(localStorage.getItem("aisci_demo_path")) || []; } catch { return []; } },
+  set demoPath(v) { localStorage.setItem("aisci_demo_path", JSON.stringify(v)); }
 };
 
 const LIVE = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
@@ -848,6 +940,7 @@ let myCmtVotes = new Set();  // commentIds (string) this user has upvoted
 let voteAgg30 = {};          // resourceId -> votes in the last 30 days (trending)
 let isAdmin = false;         // current user is a moderator
 let currentDetail = null;    // resource id open in the detail modal
+let myPath = [];             // [{resource_id, position, in_list, done}] for the current user
 
 /* The active academic background: the signed-in profile in live
    mode, or the locally-stored one in demo mode. Normalised so
@@ -938,6 +1031,7 @@ async function loadData() {
     voteAgg30 = {};
     (v30 || []).forEach(v => voteAgg30[v.resource_id] = v.n);
     isAdmin = Boolean(adm);
+    await loadMyPath();
   } else {
     $("#demoBanner").hidden = false;
     resources = [...SEED_RESOURCES, ...LS.demoSuggestions];
@@ -947,6 +1041,7 @@ async function loadData() {
     myVotes = new Set(Object.keys(dv).filter(k => dv[k]));
     comments = {};
     LS.demoComments.forEach(c => (comments[c.resource_id] ||= []).push(c));
+    await loadMyPath();
     const dcv = LS.demoCmtVotes;
     myCmtVotes = new Set(Object.keys(dcv).filter(k => dcv[k]));
     cmtVotes = {};
@@ -963,6 +1058,77 @@ async function loadData() {
       });
     }
   }
+}
+
+/* ---------- My path: saved ("like to do") + done state ---------- */
+async function loadMyPath() {
+  if (LIVE) {
+    if (!session) { myPath = []; return; }
+    const { data } = await sb.from("my_path").select("*")
+      .eq("user_id", session.user.id).order("position");
+    myPath = data || [];
+  } else {
+    myPath = LS.demoPath.slice().sort((a, b) => a.position - b.position);
+  }
+}
+const pathRowOf = rid => myPath.find(x => String(x.resource_id) === String(rid));
+const isSaved = rid => Boolean(pathRowOf(rid)?.in_list);
+const isDoneRes = rid => Boolean(pathRowOf(rid)?.done);
+const nextPathPos = () => (myPath.length ? Math.max(...myPath.map(x => x.position)) : 0) + 1;
+function pathStarHtml(rid) {
+  const s = isSaved(rid);
+  return `<button class="save-s ${s ? "on" : ""}" data-tps="${esc(String(rid))}" aria-pressed="${s}"
+    title="${s ? "Remove from my path" : "Add to my path (like to do)"}">${s ? "★" : "☆"}</button>`;
+}
+async function pathMutate(rid, patch) {   // upsert-style change to one row
+  rid = String(rid);
+  const row = pathRowOf(rid);
+  if (LIVE) {
+    if (row) await sb.from("my_path").update(patch).eq("user_id", session.user.id).eq("resource_id", rid);
+    else await sb.from("my_path").insert({ user_id: session.user.id, resource_id: rid, position: nextPathPos(), in_list: false, done: false, ...patch });
+  } else {
+    const l = LS.demoPath;
+    const r = l.find(x => String(x.resource_id) === rid);
+    if (r) Object.assign(r, patch);
+    else l.push({ resource_id: rid, position: nextPathPos(), in_list: false, done: false, ...patch });
+    LS.demoPath = l;
+  }
+  await loadMyPath();
+}
+async function pathToggleSave(rid) {
+  if (!requireIdentity()) return;
+  const had = isSaved(rid);
+  await pathMutate(rid, { in_list: !had, ...(had ? {} : { position: nextPathPos() }) });
+  render();
+  toast(had ? "Removed from your path" : "Added to your path ★");
+}
+async function pathToggleDone(rid) {
+  if (!requireIdentity()) return;
+  await pathMutate(rid, { done: !isDoneRes(rid) });
+  render();
+}
+async function pathMove(rid, dir) {   // swap position with the neighbour in the starred list
+  const listed = myPath.filter(x => x.in_list);
+  const i = listed.findIndex(x => String(x.resource_id) === String(rid));
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= listed.length) return;
+  const a = listed[i], b = listed[j];
+  await pathMutate(a.resource_id, { position: b.position });
+  await pathMutate(b.resource_id, { position: a.position });
+  render();
+}
+async function pathRename(name) {
+  name = name.trim().slice(0, 60) || "My learning path";
+  if (LIVE) {
+    if (!session) return;
+    await sb.from("profiles").update({ path_name: name }).eq("id", session.user.id);
+    if (profile) profile.path_name = name;
+  } else {
+    localStorage.setItem("aisci_demo_pathname", name);
+  }
+}
+function pathName() {
+  return (LIVE ? profile?.path_name : localStorage.getItem("aisci_demo_pathname")) || "My learning path";
 }
 
 /* ---------- Auth (live mode) ---------- */
@@ -1167,6 +1333,9 @@ function bindListHandlers(rootSel) {
   $$(rootSel + " [data-cmtvote]").forEach(b => {
     b.onclick = () => toggleCmtVote(b.dataset.cmtvote);
   });
+  $$(rootSel + " [data-tps]").forEach(b => {
+    b.onclick = e => { e.stopPropagation(); pathToggleSave(b.dataset.tps); };
+  });
   $$(rootSel + " [data-modres]").forEach(b => {
     b.onclick = async () => {
       const r = resources.find(x => String(x.id) === b.dataset.modres);
@@ -1239,6 +1408,7 @@ function renderDetail() {
         <p class="desc" style="margin-top:10px;color:var(--ink-2)">${esc(r.description || "")}</p>
         <div class="detail-actions">
           ${r.url ? `<a class="btn primary" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">Open resource ↗</a>` : ""}
+          <button class="btn" data-tps="${esc(String(r.id))}">${isSaved(r.id) ? "★ In my path" : "☆ Add to my path"}</button>
           <button class="btn" id="copyLink">🔗 Copy link</button>
           ${isAdmin ? `<button class="btn" data-modres="${esc(String(r.id))}">🛡 Remove</button>` : ""}
         </div>
@@ -1709,6 +1879,7 @@ function render() {
             ${(r.disciplines || []).map(d => `<span class="tag">${esc(d)}</span>`).join("")}
             ${matchTag}
             ${r.suggested_by ? `<span class="tag">by ${esc(r.suggested_by)}</span>` : ""}
+            ${pathStarHtml(r.id)}
             <button class="chip cmt-toggle" data-cmt="${esc(String(r.id))}" aria-expanded="${openComments.has(r.id)}">
               💬 ${(comments[r.id] || []).length || ""} ${(comments[r.id] || []).length === 1 ? "comment" : "comments"}
             </button>
@@ -2084,6 +2255,174 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
   /* ---- boot into shelves ---- */
   switchView("shelves");
   rebuildTopics();
+})();
+
+</script>
+<script>
+/* ============ PATHWAYS + MY PATH views ============ */
+(function pathViews() {
+  const STAGES = ["beginner", "intermediate", "advanced"];
+  const XP = ["None", "Beginner", "Intermediate", "Advanced"];
+  const xp = l => Math.max(0, XP.indexOf(l));
+  const personaOr = () => curPersona() ||
+    { fields: [], stage: "", ai_level: "Beginner", stats_level: "Beginner", languages: [] };
+
+  const evTags = (r, s, p) => `
+    <span class="tag type">${esc(r.rtype)}</span>
+    ${(r.languages || []).slice(0, 2).map(l => `<span class="tag lang">${esc(l)}</span>`).join("")}
+    <span class="tag">▲ ${s.raw}</span>
+    ${s.fieldVotes ? `<span class="tag match">★ ${s.fieldVotes} from your field${p.fields.length > 1 ? "s" : ""}</span>` : ""}`;
+
+  const resRow = (r, s, p) => {
+    const rid = String(r.id);
+    const on = isDoneRes(rid), saved = isSaved(rid);
+    return `<div class="tp-res ${on ? "checked" : ""}">
+      <button class="tick-s ${on ? "on" : ""}" data-tpd="${esc(rid)}" title="${on ? "Mark not done" : "Mark done"}" aria-pressed="${on}">✓</button>
+      <div class="body" data-tpo="${esc(rid)}">
+        <div class="t">${TYPE_ICONS[r.rtype] || ""} ${esc(r.title)}</div>
+        <div class="ev">${evTags(r, s, p)}</div>
+      </div>
+      <button class="save-s ${saved ? "on" : ""}" data-tps="${esc(rid)}" title="${saved ? "Remove from my path" : "Add to my path (like to do)"}">${saved ? "★" : "☆"}</button>
+    </div>`;
+  };
+
+  /* ---- Pathways by topic ---- */
+  function renderTopicPaths() {
+    const p = personaOr();
+    const byCat = {};
+    resources.forEach(r => (byCat[r.category || "Other"] ||= []).push(r));
+    const topics = Object.entries(byCat)
+      .map(([c, rs]) => {
+        const staged = {};
+        let stagedCount = 0;
+        STAGES.forEach(st => {
+          staged[st] = rs.filter(r => r.level === st)
+            .map(r => ({ r, s: scores(r) }))
+            .sort((a, b) => b.s.weighted - a.s.weighted).slice(0, 2);
+          stagedCount += staged[st].length;
+        });
+        const votes = rs.reduce((t, r) => t + (voteAgg[r.id] || []).reduce((x, a) => x + a.n, 0), 0);
+        return { c, staged, stagedCount, votes, anyN: rs.filter(r => !r.level || r.level === "any").length };
+      })
+      .filter(t => t.stagedCount >= 2)
+      .sort((a, b) => b.votes - a.votes);
+    const lvlFor = c => c === "Applied statistics" ? p.stats_level : p.ai_level;
+    const startStage = c => { const v = xp(lvlFor(c)); return v <= 1 ? "beginner" : v === 2 ? "intermediate" : "advanced"; };
+    const hasPersona = Boolean(curPersona());
+
+    pathView.innerHTML = `
+      <div class="mp-header" style="margin-bottom:26px">
+        <h2 style="font-size:1.3rem">Pathways by topic</h2>
+        <div class="mp-sub">The community's route through each topic: best beginner → intermediate → advanced picks${hasPersona ? `, ranked by votes from backgrounds like yours (<b>${esc(p.fields.join(" & "))}</b>). The highlighted stage matches the experience level you gave — your suggested entry point` : ""}. ☆ saves a resource to <b>My path</b>.</div>
+      </div>
+      ${topics.length ? topics.map(t => `
+        <section class="tp-topic">
+          <h2>${esc(t.c)}</h2>
+          <div class="tp-sub">${t.votes} vote${t.votes === 1 ? "" : "s"} across this topic${t.anyN ? ` · ${t.anyN} more level-agnostic resource${t.anyN > 1 ? "s" : ""} in Browse` : ""}</div>
+          <div class="tp-flow">
+            ${STAGES.map((st, i) => `
+              ${i ? `<div class="tp-arrow">→</div>` : ""}
+              <div class="tp-stage ${hasPersona && startStage(t.c) === st ? "you" : ""}">
+                <div class="tp-stage-head">
+                  <span class="lbl">${st}</span>
+                  ${hasPersona && startStage(t.c) === st ? `<span class="tp-you">start here</span>` : ""}
+                </div>
+                ${t.staged[st].length
+                  ? t.staged[st].map(({ r, s }) => resRow(r, s, p)).join("")
+                  : `<div class="tp-none">None yet — suggest one!</div>`}
+              </div>`).join("")}
+          </div>
+        </section>`).join("")
+      : `<div class="mp-empty">Pathways appear once topics have resources tagged beginner / intermediate / advanced.</div>`}`;
+    wireRows(pathView);
+  }
+
+  /* ---- My path ---- */
+  function renderMyPath() {
+    const p = personaOr();
+    if (LIVE && !session) {
+      myPathView.innerHTML = `<div class="mp-empty">Sign in to build your own path — star ☆ any resource to add it, then arrange and work through your course here.<br><br><button class="btn primary" id="mpSignIn">Sign in</button></div>`;
+      $("#mpSignIn").onclick = openAuth;
+      return;
+    }
+    const listed = myPath.filter(x => x.in_list);
+    const dn = listed.filter(x => x.done).length;
+    const pct = listed.length ? Math.round(dn / listed.length * 100) : 0;
+    myPathView.innerHTML = `
+      <div class="mp-header">
+        <input class="mp-name" id="mpName" value="${esc(pathName())}" maxlength="60" title="Click to rename your path">
+        <div class="mp-sub">Your own course, assembled from anything on the site — star ☆ resources to add them, reorder, tick off as you go. Synced to your account.</div>
+        ${listed.length ? `<div class="pw-bar"><i style="width:${pct}%"></i></div>
+        <div class="pw-pct">${dn} of ${listed.length} done · ${pct}%</div>` : ""}
+      </div>
+      ${listed.length ? listed.map((row, i) => {
+        const rid = String(row.resource_id);
+        const r = resources.find(x => String(x.id) === rid);
+        if (!r) return "";
+        const s = scores(r);
+        return `<div class="mp-item ${row.done ? "checked" : ""}">
+          <div class="mp-ctl">
+            <button data-mpup="${esc(rid)}" ${i === 0 ? "disabled" : ""} title="Move up">▲</button>
+            <button data-mpdn="${esc(rid)}" ${i === listed.length - 1 ? "disabled" : ""} title="Move down">▼</button>
+          </div>
+          <span class="n">${i + 1}</span>
+          <button class="tick-s ${row.done ? "on" : ""}" data-tpd="${esc(rid)}" title="${row.done ? "Mark not done" : "Mark done"}">✓</button>
+          <div class="body" data-tpo="${esc(rid)}">
+            <div class="t">${TYPE_ICONS[r.rtype] || ""} ${esc(r.title)}</div>
+            <div class="ev">${evTags(r, s, p)}${r.level && r.level !== "any" ? `<span class="tag level">${esc(r.level)}</span>` : ""}</div>
+          </div>
+          <button class="mp-x" data-mpx="${esc(rid)}" title="Remove from my path">✕</button>
+        </div>`;
+      }).join("") : `<div class="mp-empty">Nothing here yet.<br>Tap the ☆ on any resource — in Pathways, Browse, or a resource's detail view — to add it, then arrange your own course here.</div>`}`;
+    $("#mpName")?.addEventListener("change", e => pathRename(e.target.value));
+    myPathView.querySelectorAll("[data-mpup]").forEach(b => b.onclick = () => pathMove(b.dataset.mpup, -1));
+    myPathView.querySelectorAll("[data-mpdn]").forEach(b => b.onclick = () => pathMove(b.dataset.mpdn, 1));
+    myPathView.querySelectorAll("[data-mpx]").forEach(b => b.onclick = () => pathToggleSave(b.dataset.mpx));
+    wireRows(myPathView);
+  }
+
+  function wireRows(root) {
+    root.querySelectorAll("[data-tpd]").forEach(b => b.onclick = () => pathToggleDone(b.dataset.tpd));
+    root.querySelectorAll("[data-tpo]").forEach(el => el.onclick = () => openDetail(el.dataset.tpo));
+    root.querySelectorAll("[data-tps]").forEach(b => b.onclick = () => pathToggleSave(b.dataset.tps));
+  }
+
+  /* ---- register views ---- */
+  const pathView = document.createElement("div"); pathView.id = "pathView"; pathView.style.display = "none";
+  const myPathView = document.createElement("div"); myPathView.id = "myPathView"; myPathView.style.display = "none";
+  document.getElementById("graphView").after(pathView, myPathView);
+
+  const viewBar = document.querySelector(".view-tabs");
+  const mkTab = (label, key, pos) => {
+    const b = document.createElement("button");
+    b.className = "tab"; b.dataset.view = key; b.textContent = label;
+    viewBar.insertBefore(b, viewBar.children[pos]);
+  };
+  mkTab("Pathways", "path", 1);
+  mkTab("My path", "mypath", 2);
+
+  const origSwitch = window.switchView;
+  window.switchView = function (v) {
+    if (v === "path" || v === "mypath") {
+      viewBar.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.view === v));
+      ["shelvesView", "browseLayout", "graphView"].forEach(id => document.getElementById(id).style.display = "none");
+      pathView.style.display = v === "path" ? "" : "none";
+      myPathView.style.display = v === "mypath" ? "" : "none";
+      v === "path" ? renderTopicPaths() : renderMyPath();
+    } else {
+      pathView.style.display = "none";
+      myPathView.style.display = "none";
+      origSwitch(v);
+    }
+  };
+  viewBar.querySelectorAll(".tab").forEach(t => t.onclick = () => switchView(t.dataset.view));
+
+  const origRender = window.render;
+  window.render = function () {
+    origRender();
+    if (pathView.style.display !== "none") renderTopicPaths();
+    if (myPathView.style.display !== "none") renderMyPath();
+  };
 })();
 
 </script>
