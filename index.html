@@ -267,6 +267,7 @@ select.ctl {
 .tag.type { background: var(--accent-soft); color: var(--accent-deep); border-color: transparent; }
 .tag.cat { background: color-mix(in oklab, var(--violet) 12%, var(--surface)); color: var(--violet); border-color: transparent; }
 .tag.lang { background: color-mix(in oklab, var(--warm) 12%, var(--surface)); color: var(--warm); border-color: transparent; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .7rem; }
+.newdot { color: var(--gold); font-size: .8em; }
 .tag.match {
   background: color-mix(in oklab, var(--good) 14%, var(--surface));
   color: var(--good-text); border-color: transparent;
@@ -657,6 +658,12 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
     </div>
     <div class="field"><label for="sCat">Topic</label>
       <select id="sCat"></select>
+    </div>
+    <div class="field" id="sCatNewWrap" hidden>
+      <label for="sCatNew">New topic name</label>
+      <input type="text" id="sCatNew" maxlength="40" list="topicList" placeholder="e.g. Causal inference">
+      <datalist id="topicList"></datalist>
+      <p class="hint" style="margin-top:6px">Check the suggestions as you type — if a similar topic already exists, picking it keeps the library tidy.</p>
     </div>
     <div class="field"><label>Relevant disciplines (pick any)</label><div class="chip-row" id="sDiscChips"></div></div>
     <div class="field"><label>Involves code in… (pick the languages its code snippets use, if any)</label><div class="chip-row" id="sLangChips"></div></div>
@@ -1570,10 +1577,21 @@ async function submitSuggestion() {
   if (!title || !desc) { toast("Please add a title and a short description."); return; }
   let url = $("#sUrl").value.trim();
   if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+  // resolve topic: existing choice, or a proposed new one (normalised + deduped)
+  let category = $("#sCat").value || null;
+  let newTopic = false;
+  if (category === "__new__") {
+    let t = $("#sCatNew").value.trim().replace(/\s+/g, " ").slice(0, 40);
+    if (!t) { toast("Name your new topic, or pick an existing one."); return; }
+    t = t[0].toUpperCase() + t.slice(1);
+    const existing = allTopics().find(c => c.toLowerCase() === t.toLowerCase());
+    category = existing || t;
+    newTopic = !existing;
+  }
   const rec = {
     title, url: url || null, description: desc,
     rtype: $("#sType").value,
-    category: $("#sCat").value || null,
+    category,
     disciplines: $$("#sDiscChips .chip.active").map(c => c.dataset.v),
     languages: $$("#sLangChips .chip.active").map(c => c.dataset.v),
     level: $("#sLevel").value,
@@ -1593,8 +1611,9 @@ async function submitSuggestion() {
   closeOverlay("#suggestOverlay");
   ["#sTitle", "#sUrl", "#sDesc", "#sName"].forEach(s => $(s).value = "");
   $$("#sDiscChips .chip.active, #sLangChips .chip.active").forEach(c => c.classList.remove("active"));
+  $("#sCatNew").value = ""; $("#sCatNewWrap").hidden = true; $("#sCat").selectedIndex = 0;
   render();
-  toast("Thanks! Your suggestion is live 🎉");
+  toast(newTopic ? `Thanks! New topic “${category}” created 🎉` : "Thanks! Your suggestion is live 🎉");
 }
 
 /* ---------- Persona / profile ---------- */
@@ -1744,6 +1763,7 @@ function render() {
       </div>`).join("");
   }
   $("#footerNote").textContent = LIVE ? "Live · votes shared with everyone" : "Demo mode · votes stay in this browser";
+  refreshTopicOptions();
 }
 
 /* ---------- Wiring ---------- */
@@ -1762,8 +1782,30 @@ chipRow("#langChips", LANGUAGES, false); // multi-select, optional
 chipRow("#sLangChips", LANGUAGES, false);
 chipRow("#sDiscChips", FIELDS.filter(f => f !== "Other"), false);
 $("#sType").innerHTML = TYPES.map(t => `<option value="${t}">${TYPE_ICONS[t]} ${t[0].toUpperCase() + t.slice(1)}</option>`).join("");
-$("#sCat").innerHTML = CATEGORIES.map(c => `<option>${esc(c)}</option>`).join("");
-$("#filterCategory").innerHTML += CATEGORIES.map(c => `<option>${esc(c)}</option>`).join("");
+/* Topics are open: built-in CATEGORIES plus any community-created ones in the data */
+function allTopics() {
+  const set = new Set(CATEGORIES);
+  resources.forEach(r => { if (r.category) set.add(r.category); });
+  const community = [...set].filter(c => !CATEGORIES.includes(c)).sort();
+  return [...CATEGORIES.filter(c => c !== "Other"), ...community, "Other"];
+}
+const isCommunityTopic = c => Boolean(c) && !CATEGORIES.includes(c);
+function refreshTopicOptions() {
+  const topics = allTopics();
+  const cur = $("#sCat").value;
+  $("#sCat").innerHTML = topics.map(c => `<option>${esc(c)}</option>`).join("") +
+    `<option value="__new__">＋ Propose a new topic…</option>`;
+  if (topics.includes(cur) || cur === "__new__") $("#sCat").value = cur;
+  const curF = $("#filterCategory").value;
+  $("#filterCategory").innerHTML = `<option value="">All topics</option>` + topics.map(c => `<option>${esc(c)}</option>`).join("");
+  if (topics.includes(curF)) $("#filterCategory").value = curF;
+  $("#topicList").innerHTML = topics.map(c => `<option value="${esc(c)}">`).join("");
+}
+refreshTopicOptions();
+$("#sCat").onchange = () => {
+  $("#sCatNewWrap").hidden = $("#sCat").value !== "__new__";
+  if (!$("#sCatNewWrap").hidden) $("#sCatNew").focus();
+};
 $("#filterDiscipline").innerHTML += FIELDS.map(f => `<option>${esc(f)}</option>`).join("");
 $("#filterLang").innerHTML += LANGUAGES.map(l => `<option>${esc(l)}</option>`).join("") + `<option value="none">No code</option>`;
 $("#filterType").innerHTML += TYPES.map(t => `<option value="${t}">${t[0].toUpperCase() + t.slice(1)}</option>`).join("");
@@ -1952,12 +1994,13 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
     const mk = (label, val) => {
       const b = document.createElement("button");
       b.className = "sb-topic" + (filters.cat === val ? " active" : "");
-      b.innerHTML = `<span>${esc(label)}</span><span class="sb-n">${val ? (counts[val] || 0) : resources.length}</span>`;
+      const mark = (isAdmin || !LIVE) && isCommunityTopic(val) ? ' <span class="newdot" title="Community-created topic">✦</span>' : "";
+      b.innerHTML = `<span>${esc(label)}${mark}</span><span class="sb-n">${val ? (counts[val] || 0) : resources.length}</span>`;
       b.onclick = () => { filters.cat = val; rebuildTopics(); render(); };
       return b;
     };
     topicsBox.append(mk("All topics", ""));
-    CATEGORIES.filter(c => counts[c]).forEach(c => topicsBox.append(mk(c, c)));
+    allTopics().filter(c => counts[c]).forEach(c => topicsBox.append(mk(c, c)));
   }
 
   /* ---- hide the old rows (sort tabs live in the dropdown now) ---- */
@@ -1975,8 +2018,9 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
       const top = byCat[c]
         .map(r => ({ r, v: (voteAgg[r.id] || []).reduce((s, a) => s + a.n, 0) }))
         .sort((a, b) => b.v - a.v).slice(0, 5);
+      const mark = (isAdmin || !LIVE) && isCommunityTopic(c) ? ' <span class="newdot" title="Community-created topic">✦</span>' : "";
       return `<section class="shelf">
-        <div class="shelf-head"><h2>${esc(c)}</h2>
+        <div class="shelf-head"><h2>${esc(c)}${mark}</h2>
           <button class="linky" data-shelfall="${esc(c)}">See all ${byCat[c].length} →</button></div>
         <div class="shelf-row">${top.map(({ r, v }) => `
           <button class="shelf-card" data-shelfopen="${esc(String(r.id))}">
