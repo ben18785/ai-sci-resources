@@ -640,7 +640,7 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
       </a>
       <button class="btn icon ghost" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
       <span id="authArea"></span>
-      <button class="btn primary" id="suggestBtn">＋ Suggest a resource</button>
+      <button class="btn primary" id="suggestBtn">＋ Add a resource</button>
     </div>
   </div>
   <div class="hero-inner">
@@ -738,8 +738,8 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
 <!-- Suggest resource modal -->
 <div class="overlay" id="suggestOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="suggestTitle">
-    <h2 id="suggestTitle">Suggest a resource</h2>
-    <p class="hint">Know a great course, paper, book or tool for learning AI in science? Add it for the community to vote on.</p>
+    <h2 id="suggestTitle">Add a resource</h2>
+    <p class="hint">Know a great course, paper, book or tool for learning AI in science? Add it for the community to vote on — it goes live immediately.</p>
     <div class="field"><label for="sTitle">Title *</label><input type="text" id="sTitle" maxlength="160" placeholder="e.g. Deep Learning for Molecules & Materials"></div>
     <div class="field"><label for="sUrl">Link</label><input type="url" id="sUrl" placeholder="https://…"></div>
     <div class="field"><label for="sDesc">Why is it useful? *</label><textarea id="sDesc" maxlength="400" placeholder="One or two sentences on what it covers and who it's for"></textarea></div>
@@ -816,7 +816,7 @@ footer .wrap { padding: 26px 24px; display: flex; justify-content: space-between
 <div class="overlay" id="authOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
     <h2 id="authTitle">Sign in to take part</h2>
-    <p class="hint">Browsing is open to everyone. Voting and suggesting need a quick sign-in so each person can vote once per resource (upvote as many resources as you like — click ▲ again to un-vote) — and so your path and votes follow you across devices. We only receive your name and email address; nothing is ever posted on your behalf.</p>
+    <p class="hint">Browsing is open to everyone. Voting and adding resources need a quick sign-in so each person can vote once per resource (upvote as many resources as you like — click ▲ again to un-vote) — and so your path and votes follow you across devices. We only receive your name and email address; nothing is ever posted on your behalf.</p>
     <div class="auth-buttons">
       <button class="btn" id="ghLogin">
         <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -1443,8 +1443,8 @@ function openActivity() {
       ${upvoted.length ? upvoted.map(r => item(r.id, esc(r.title))).join("") : `<div class="act-none">Nothing upvoted yet.</div>`}</div>
     <div class="act-section"><h3>💬 My comments (${myCmts.length})</h3>
       ${myCmts.length ? myCmts.map(({ c, rid }) => item(rid, `“${esc(c.body.length > 90 ? c.body.slice(0, 90) + "…" : c.body)}”`, `on ${titleOf(rid)} · ${esc(fmtWhen(c.created_at))}`)).join("") : `<div class="act-none">No comments yet.</div>`}</div>
-    <div class="act-section"><h3>➕ My suggestions (${mine.length})</h3>
-      ${mine.length ? mine.map(r => item(r.id, esc(r.title), `${(voteAgg[r.id] || []).reduce((t, a) => t + a.n, 0)} votes`)).join("") : `<div class="act-none">No suggestions yet — add one!</div>`}</div>`;
+    <div class="act-section"><h3>➕ Added by me (${mine.length})</h3>
+      ${mine.length ? mine.map(r => item(r.id, esc(r.title), `${(voteAgg[r.id] || []).reduce((t, a) => t + a.n, 0)} votes`)).join("") : `<div class="act-none">Nothing added yet — add a resource!</div>`}</div>`;
   $$("#activityBody [data-actgo]").forEach(b => b.onclick = () => {
     closeOverlay("#activityOverlay");
     openDetail(b.dataset.actgo);
@@ -1783,7 +1783,7 @@ async function submitSuggestion() {
   $$("#sDiscChips .chip.active, #sLangChips .chip.active").forEach(c => c.classList.remove("active"));
   $("#sCatNew").value = ""; $("#sCatNewWrap").hidden = true; $("#sCat").selectedIndex = 0;
   render();
-  toast(newTopic ? `Thanks! New topic “${category}” created 🎉` : "Thanks! Your suggestion is live 🎉");
+  toast(newTopic ? `Thanks! New topic “${category}” created 🎉` : "Thanks! Your resource is live 🎉");
 }
 
 /* ---------- Persona / profile ---------- */
@@ -1854,7 +1854,7 @@ function render() {
 
   const grid = $("#resourceGrid");
   if (!scored.length) {
-    grid.innerHTML = `<div class="empty">Nothing matches those filters yet.<br>Be the first — <b>suggest a resource</b> above!</div>`;
+    grid.innerHTML = `<div class="empty">Nothing matches those filters yet.<br>Be the first — <b>add a resource</b> above!</div>`;
   } else {
     grid.innerHTML = scored.map(({ r, s }, i) => {
       const voted = myVotes.has(r.id);
@@ -2237,7 +2237,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
   sticky.innerHTML = `
     <span class="brand"><span class="brand-mark">⚛</span> AI in Science</span>
     <input type="search" id="stickySearch" placeholder="Search resources…" aria-label="Search">
-    <button class="btn primary" id="stickySuggest">＋ Suggest</button>`;
+    <button class="btn primary" id="stickySuggest">＋ Add</button>`;
   document.body.append(sticky);
   sticky.querySelector("#stickySearch").oninput = e => {
     filters.q = e.target.value.toLowerCase();
@@ -2329,7 +2329,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
                 </div>
                 ${t.staged[st].length
                   ? t.staged[st].map(({ r, s }) => resRow(r, s, p)).join("")
-                  : `<div class="tp-none">None yet — suggest one!</div>`}
+                  : `<div class="tp-none">None yet — add one!</div>`}
               </div>`).join("")}
           </div>
         </section>`).join("")
