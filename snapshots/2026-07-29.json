@@ -1,0 +1,391 @@
+{
+  "date": "2026-07-29",
+  "resources": [
+    {
+      "id": "a1de6977-27cb-4eca-b2ec-3fc3fc3889bf",
+      "title": "Ten simple rules for navigating AI in science",
+      "category": "Fellowship workshops"
+    },
+    {
+      "id": "adac6ff3-232d-43e1-8016-bebbf9ac7f05",
+      "title": "EcoViz (UC San Diego, 2024)",
+      "category": "Fellowship workshops"
+    },
+    {
+      "id": "01e236b1-17ef-4d46-9f84-141dfb6de0de",
+      "title": "Pattern Recognition and Machine Learning — C. Bishop",
+      "category": "Machine learning"
+    },
+    {
+      "id": "59145172-9a24-4332-8da1-2d8264b79706",
+      "title": "Deep Learning — Goodfellow, Bengio & Courville",
+      "category": "Machine learning"
+    },
+    {
+      "id": "75ab2e1e-bb54-4f70-b81c-01bd9dfa4de7",
+      "title": "Deep Learning: Foundations and Concepts — Bishop & Bishop",
+      "category": "Machine learning"
+    },
+    {
+      "id": "83785d65-006a-4a1b-ada5-b64ab6cbabaa",
+      "title": "University of Tübingen ML lectures (YouTube)",
+      "category": "Machine learning"
+    },
+    {
+      "id": "859c7189-86c3-4f63-8589-2da1c53b8d18",
+      "title": "Distill.pub",
+      "category": "Machine learning"
+    },
+    {
+      "id": "f804fd23-4031-475b-a55c-fe42d5cf074d",
+      "title": "The Elements of Statistical Learning — Hastie, Tibshirani & Friedman",
+      "category": "Applied statistics"
+    },
+    {
+      "id": "16242316-22a0-446e-a2c6-ec60a35f0605",
+      "title": "Statistics and Probability — Khan Academy",
+      "category": "Applied statistics"
+    },
+    {
+      "id": "94b7c06c-a2b5-4a20-a1d6-022f0ce27053",
+      "title": "Applied Software Engineering Fundamentals — R. Ahuja (Coursera)",
+      "category": "Programming"
+    },
+    {
+      "id": "9a927ed0-7ffe-4bf1-bf17-9e74af3ba408",
+      "title": "Introduction to Big Data with Spark and Hadoop — K. Muthuraman",
+      "category": "Programming"
+    },
+    {
+      "id": "22adc604-3d65-41ea-b4cf-41afcd50a2e8",
+      "title": "LinkedIn Learning",
+      "category": "Programming"
+    },
+    {
+      "id": "58b0ef6d-883f-4d40-a69e-c924c0d34725",
+      "title": "Mathematics for Machine Learning — Deisenroth, Faisal & Ong",
+      "category": "Maths foundations"
+    },
+    {
+      "id": "b5fbb771-066d-4dfd-a679-68be964e55f3",
+      "title": "Linear Algebra — Gilbert Strang (MIT)",
+      "category": "Maths foundations"
+    },
+    {
+      "id": "f48605ec-0b4e-43f6-bfc7-44392bda5e2b",
+      "title": "Linear Algebra — MathTheBeautiful",
+      "category": "Maths foundations"
+    },
+    {
+      "id": "0e326ace-2fb0-40ec-8291-7069bee0368c",
+      "title": "Essence of Linear Algebra — 3Blue1Brown",
+      "category": "Maths foundations"
+    },
+    {
+      "id": "dc70763a-6526-4077-83be-a1ca87202060",
+      "title": "Convex Optimization I & II — S. Boyd (Stanford)",
+      "category": "Optimisation"
+    },
+    {
+      "id": "220212bf-df7b-4e72-972e-e9be978a3e7b",
+      "title": "Numerical Optimal Control — Diehl & Gros",
+      "category": "Optimisation"
+    },
+    {
+      "id": "87428373-f0c5-440b-8765-686302196093",
+      "title": "Nonlinear and Dynamic Optimization — B. Chachuat",
+      "category": "Optimisation"
+    },
+    {
+      "id": "b5a3ea24-47cb-45d3-891b-2abf22d1da2f",
+      "title": "Information Theory, Pattern Recognition, and Neural Networks — D. MacKay",
+      "category": "Information theory"
+    },
+    {
+      "id": "7cf24cbb-b0dc-4db2-9a08-d4cbb5ff3c00",
+      "title": "Introduction to Graph Theory — R. J. Wilson",
+      "category": "Graph theory"
+    },
+    {
+      "id": "38a71dd3-ef4b-4c61-a434-afeea7043c6a",
+      "title": "Computer Vision: Algorithms and Applications — R. Szeliski",
+      "category": "Computer vision"
+    },
+    {
+      "id": "42714278-88db-4a09-9e17-cba027c326c3",
+      "title": "Data-Driven Animation for Science Communication (Coursera)",
+      "category": "Data visualization"
+    },
+    {
+      "id": "4ed5b717-3ab7-4bb0-b49c-c57311e1d3c5",
+      "title": "Schmidt AI in Science Postdoctoral Fellowship",
+      "category": "Institutional resources"
+    },
+    {
+      "id": "9a55c478-3fab-4b7d-8eae-dade530f275f",
+      "title": "Cornell University AI for Science Institute",
+      "category": "Institutional resources"
+    },
+    {
+      "id": "1d6e7631-8fb7-4bc3-8c6b-f9f629fea1da",
+      "title": "I-X Centre for AI in Science resources (Imperial College London)",
+      "category": "Institutional resources"
+    },
+    {
+      "id": "3fdf3a85-ae2c-4bb0-8df7-3c84a05a2677",
+      "title": "TCAIREM Resource Hub (U Toronto)",
+      "category": "Institutional resources"
+    },
+    {
+      "id": "21abb953-c2c3-4084-9564-4d9d2ad636fd",
+      "title": "Data Science Methods & Statistical Learnings — S. Aref (YouTube)",
+      "category": "Institutional resources"
+    },
+    {
+      "id": "b2e75b9f-fa28-4a01-bd51-6645091dbb21",
+      "title": "Introduction to Big Data (UC San Diego, Coursera)",
+      "category": "Institutional resources"
+    },
+    {
+      "id": "e5102767-10af-4a74-9ccd-c04141ead2fe",
+      "title": "Bayesian inference lectures by Ben Lambert",
+      "category": "Applied statistics"
+    },
+    {
+      "id": "a217b121-fb40-4a9e-a4a9-55fdbb3b33b8",
+      "title": "Foundation Model for Science Workshop (U Toronto, 2025)",
+      "category": "Fellowship workshops"
+    },
+    {
+      "id": "da2d716d-11c8-4e6e-b5a0-b43c7a8fd6de",
+      "title": "Symbolic Model Discovery from Time-Series Data (Imperial, 2025)",
+      "category": "Fellowship workshops"
+    },
+    {
+      "id": "faa763b5-5484-4f66-b7e4-6aaa8cc52629",
+      "title": "Knowledge-Guided Machine Learning workshop (U Michigan, 2025)",
+      "category": "Fellowship workshops"
+    },
+    {
+      "id": "500555bb-bd20-40ef-abf9-6174000c40c9",
+      "title": "RAG Copilot for Scientific Software (UW eScience, 2025)",
+      "category": "Fellowship workshops"
+    },
+    {
+      "id": "63a34974-9bf4-48f5-b35d-b70cfd4177d2",
+      "title": "Dive into Deep Learning — A. Zhang et al.",
+      "category": "Machine learning"
+    },
+    {
+      "id": "9a65ff2d-66d7-4e5f-a173-874f73baedd1",
+      "title": "Supervised Machine Learning: Regression and Classification — Andrew Ng",
+      "category": "Machine learning"
+    },
+    {
+      "id": "99c0e7dc-c2ac-421e-9e0e-d11505313c01",
+      "title": "Unsupervised Learning, Recommenders, Reinforcement Learning — Andrew Ng",
+      "category": "Machine learning"
+    },
+    {
+      "id": "ec183c5d-84ab-4901-b17e-8379b2f65db0",
+      "title": "Deep Learning Specialization — Andrew Ng",
+      "category": "Machine learning"
+    },
+    {
+      "id": "2a800948-6cf3-41c1-aa7c-ec3093f937c8",
+      "title": "Practical Deep Learning for Coders — fast.ai",
+      "category": "Machine learning"
+    },
+    {
+      "id": "ee8229ac-5786-4bb2-9521-00364777a477",
+      "title": "UvA Deep Learning notebooks",
+      "category": "Machine learning"
+    },
+    {
+      "id": "f2e1c608-7349-4264-b093-585f6b4c23bf",
+      "title": "Think Python (2nd ed.) — A. Downey",
+      "category": "Programming"
+    },
+    {
+      "id": "5dda7078-b796-468f-9f5d-df12451c023f",
+      "title": "Machine Learning from Scratch — D. Friedman",
+      "category": "Programming"
+    },
+    {
+      "id": "bffd55f5-f5b7-4869-a6ea-a77026d9474a",
+      "title": "Crash Course on Python — Google (Coursera)",
+      "category": "Programming"
+    },
+    {
+      "id": "8630a023-1a8c-4d0e-808d-68d0454a982b",
+      "title": "Python for Data Science and Machine Learning Bootcamp — J. Portilla (Udemy)",
+      "category": "Programming"
+    },
+    {
+      "id": "e82fa283-ce1e-462e-9eb0-607d6db2c53c",
+      "title": "Deep Neural Networks with PyTorch — J. Santarcangelo (Coursera)",
+      "category": "Programming"
+    },
+    {
+      "id": "9d79fa65-79cb-444f-943f-ef1d27583d2e",
+      "title": "Introduction to TensorFlow for AI, ML, and Deep Learning — L. Moroney (Coursera)",
+      "category": "Programming"
+    },
+    {
+      "id": "98f15052-768d-4544-9ea8-a0371a5611ae",
+      "title": "Deep Learning Basics — Institut Polytechnique de Paris",
+      "category": "Programming"
+    },
+    {
+      "id": "810ccf91-aa7f-48c0-a32e-aa8279574e79",
+      "title": "CS50's Introduction to AI with Python — Harvard",
+      "category": "Programming"
+    },
+    {
+      "id": "062c01ac-6089-4c67-8109-3381afbe4eff",
+      "title": "6.0001 Introduction to CS and Programming in Python — MIT OCW",
+      "category": "Programming"
+    },
+    {
+      "id": "7a9143e8-c479-44b3-908e-e7dfd6e66c35",
+      "title": "Mathematical Foundations of Machine Learning (Udemy)",
+      "category": "Maths foundations"
+    },
+    {
+      "id": "5842a20d-b380-432f-97c4-a7e981fa0477",
+      "title": "Audio Signal Processing for Machine Learning — V. Velardo",
+      "category": "Signal processing"
+    },
+    {
+      "id": "79d21acf-8da9-4ce3-92ce-b223ced3ea3f",
+      "title": "Deep Learning with Python — Imperial RCDS course",
+      "category": "Institutional resources"
+    },
+    {
+      "id": "127dc8b0-2d1a-4386-95ad-f8163cb87a78",
+      "title": "A Student's Guide to Bayesian Statistics — B. Lambert",
+      "category": "Applied statistics"
+    },
+    {
+      "id": "e33d8d4d-2278-4253-a9fc-8c962884eca5",
+      "title": "Bayesian Statistics Specialization — H. Lee (Coursera)",
+      "category": "Applied statistics"
+    },
+    {
+      "id": "fbfcc7b1-a8e6-4cfb-9ccd-73f3897c1ae5",
+      "title": "Hands-On Programming with R — G. Grolemund",
+      "category": "Programming"
+    },
+    {
+      "id": "9b3ad3d4-a7c3-43f2-901e-5e4ceca7eefc",
+      "title": "Hands-On Machine Learning with R — Boehmke & Greenwell",
+      "category": "Programming"
+    },
+    {
+      "id": "0e799360-2aa0-4f9a-b46e-be6c67356759",
+      "title": "Data Analysis with R Programming — Google (Coursera)",
+      "category": "Programming"
+    },
+    {
+      "id": "2da04e78-0c88-466a-9e41-e5ea1ed3b238",
+      "title": "Statistical Rethinking — R. McElreath",
+      "category": "Applied statistics"
+    },
+    {
+      "id": "8d5d4ff7-d93c-415e-af3a-e07c66bb7209",
+      "title": "Statistical Rethinking lectures — R. McElreath (YouTube)",
+      "category": "Applied statistics"
+    },
+    {
+      "id": "d835734e-0e0c-4c81-9032-876881cb3de9",
+      "title": "U Toronto Map & Data Library — self-paced courses and workshops",
+      "category": "Institutional resources"
+    },
+    {
+      "id": "fe0bc998-5d07-49a5-9a59-e3e0bc95f768",
+      "title": "Bayesian Data Analysis — Gelman et al.",
+      "category": "Applied statistics"
+    },
+    {
+      "id": "0207d44a-c6d5-4962-9e73-dacd370684d7",
+      "title": "Oxford Research Software Engineering online catalogue",
+      "category": "Research Software Engineering"
+    },
+    {
+      "id": "bbf5f189-5e62-407a-9485-8f83921bae51",
+      "title": "ODE modelling with diffsol",
+      "category": "Scientific Computing"
+    },
+    {
+      "id": "41433a92-b32d-4a0c-8075-87fbaaedbeea",
+      "title": "Hands on Machine Learning with Scikit-learn, Keras and Tensor Flow",
+      "category": "Machine learning"
+    }
+  ],
+  "vote_counts": [
+    {
+      "resource_id": "0207d44a-c6d5-4962-9e73-dacd370684d7",
+      "n": 1
+    },
+    {
+      "resource_id": "fe0bc998-5d07-49a5-9a59-e3e0bc95f768",
+      "n": 1
+    },
+    {
+      "resource_id": "0207d44a-c6d5-4962-9e73-dacd370684d7",
+      "n": 1
+    },
+    {
+      "resource_id": "2da04e78-0c88-466a-9e41-e5ea1ed3b238",
+      "n": 1
+    },
+    {
+      "resource_id": "127dc8b0-2d1a-4386-95ad-f8163cb87a78",
+      "n": 1
+    },
+    {
+      "resource_id": "b5a3ea24-47cb-45d3-891b-2abf22d1da2f",
+      "n": 1
+    },
+    {
+      "resource_id": "f804fd23-4031-475b-a55c-fe42d5cf074d",
+      "n": 1
+    },
+    {
+      "resource_id": "127dc8b0-2d1a-4386-95ad-f8163cb87a78",
+      "n": 1
+    },
+    {
+      "resource_id": "bbf5f189-5e62-407a-9485-8f83921bae51",
+      "n": 1
+    },
+    {
+      "resource_id": "fe0bc998-5d07-49a5-9a59-e3e0bc95f768",
+      "n": 1
+    },
+    {
+      "resource_id": "127dc8b0-2d1a-4386-95ad-f8163cb87a78",
+      "n": 1
+    },
+    {
+      "resource_id": "da2d716d-11c8-4e6e-b5a0-b43c7a8fd6de",
+      "n": 1
+    },
+    {
+      "resource_id": "0207d44a-c6d5-4962-9e73-dacd370684d7",
+      "n": 1
+    },
+    {
+      "resource_id": "adac6ff3-232d-43e1-8016-bebbf9ac7f05",
+      "n": 1
+    },
+    {
+      "resource_id": "0207d44a-c6d5-4962-9e73-dacd370684d7",
+      "n": 1
+    },
+    {
+      "resource_id": "f804fd23-4031-475b-a55c-fe42d5cf074d",
+      "n": 1
+    }
+  ]
+}
