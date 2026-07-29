@@ -695,6 +695,18 @@ const W_BASE = 1.0, W_SAME_FIELD = 1.0, W_RELATED_FIELD = 0.4, W_SAME_STAGE = 0.
 /* A vote row's discipline list (new votes carry arrays; old ones a single field) */
 const fieldsOf = a => a.voter_fields || (a.voter_field ? [a.voter_field] : []);
 
+/* Trending: Reddit-style "hot" adapted for evergreen resources.
+   log10 of the last 30 days' votes (so vote 10 matters as much as votes 11-100),
+   plus a newness bonus that fades over a resource's first month.
+   TREND_NEW_BONUS 0.5 ≈ a 3-vote head start on day one. Tune to taste. */
+const TREND_NEW_BONUS = 0.5, TREND_NEW_DAYS = 30;
+function trendScore(r) {
+  const v30 = voteAgg30[r.id] || 0;
+  const ageDays = (Date.now() - new Date(r.created_at || 0).getTime()) / 86400000;
+  const newness = Math.max(0, 1 - ageDays / TREND_NEW_DAYS) * TREND_NEW_BONUS;
+  return Math.log10(Math.max(v30, 1)) + newness;
+}
+
 /* ---------- Seed data (demo mode only; live mode reads the DB) ---------- */
 const SEED_RESOURCES = window.SEED_RESOURCES || [];
 
@@ -1546,7 +1558,7 @@ function render() {
   if (sortMode === "top") scored.sort((a, b) => b.s.raw - a.s.raw);
   else if (sortMode === "new") scored.sort((a, b) => new Date(b.r.created_at || 0) - new Date(a.r.created_at || 0));
   else if (sortMode === "trending") scored.sort((a, b) =>
-    (voteAgg30[b.r.id] || 0) - (voteAgg30[a.r.id] || 0) || b.s.weighted - a.s.weighted);
+    trendScore(b.r) - trendScore(a.r) || b.s.weighted - a.s.weighted);
   else scored.sort((a, b) => b.s.weighted - a.s.weighted);
 
   const grid = $("#resourceGrid");
@@ -1578,7 +1590,8 @@ function render() {
             <button class="chip cmt-toggle" data-cmt="${esc(String(r.id))}" aria-expanded="${openComments.has(r.id)}">
               💬 ${(comments[r.id] || []).length || ""} ${(comments[r.id] || []).length === 1 ? "comment" : "comments"}
             </button>
-            ${sortMode === "trending" && voteAgg30[r.id] ? `<span class="tag">🔥 ${voteAgg30[r.id]} this month</span>` : ""}
+            ${sortMode === "trending" && voteAgg30[r.id] ? `<span class="tag">${voteAgg30[r.id]} vote${voteAgg30[r.id] > 1 ? "s" : ""} this month</span>` : ""}
+            ${sortMode === "trending" && !voteAgg30[r.id] && trendScore(r) > 0 ? `<span class="tag">new</span>` : ""}
             ${isAdmin ? `<button class="mod-btn" data-modres="${esc(String(r.id))}">🛡 remove</button>` : ""}
           </div>
         </div>
