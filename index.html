@@ -181,6 +181,16 @@ a.btn { text-decoration: none; }
 }
 .cta-row { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
+/* Away from home the page leads with the content: the tagline and the
+   site-wide numbers are an entrance, not a permanent header. The persona row
+   stays, because it is how you change the ranking you are looking at. */
+.titlewrap.lean { padding-top: 16px; }
+.titlewrap.lean h1,
+.titlewrap.lean p.sub,
+.titlewrap.lean #statsRow,
+.titlewrap.lean .usage-line { display: none; }
+.titlewrap.lean .cta-row { margin-top: 0; }
+
 /* Four numbers on one hairline-separated line, not three glass panels. */
 #statsRow {
   display: flex; gap: 32px; flex-wrap: wrap;
@@ -1238,9 +1248,9 @@ function scores(r) {
 /* ---------- Theme ---------- */
 function applyTheme(t) { document.documentElement.dataset.theme = t; localStorage.setItem("aisci_theme", t); }
 (function initTheme() {
-  // Dark by default; visitors can still switch and their choice is remembered
+  // Light by default; visitors can still switch and their choice is remembered
   const saved = localStorage.getItem("aisci_theme");
-  applyTheme(saved || "dark");
+  applyTheme(saved || "light");
 })();
 $("#themeToggle").onclick = () =>
   applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
@@ -3610,6 +3620,19 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".overlay
 
   const origRender = window.render;
   window.render = function () { origRender(); btn.hidden = !(isAdmin || !LIVE); };
+})();
+</script>
+<script>
+/* ============ The title block belongs to the home view ============
+   Installed last, so it wraps whatever switchView the other view modules
+   ended up with. */
+(function leanHeader() {
+  const tw = document.querySelector(".titlewrap");
+  const apply = v => tw.classList.toggle("lean", v !== "shelves");
+  const orig = window.switchView;
+  window.switchView = function (v) { apply(v); return orig(v); };
+  /* the shell already booted into a view before this ran */
+  apply(document.querySelector(".view-tabs .tab.active")?.dataset.view || "shelves");
 })();
 </script>
 </body>
