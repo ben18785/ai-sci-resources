@@ -465,7 +465,7 @@ console.log('Digest button visible to admin:', await page.isVisible('#digestBtn'
 await page.click('#digestBtn');
 await page.waitForTimeout(400);
 const dg = await page.inputValue('#digestText');
-console.log('Digest content built:', dg.includes('AI in Science Atlas') && dg.includes('Trending'));
+console.log('Digest content built:', dg.includes('AI in Science Learning Atlas') && dg.includes('Trending'));
 await page.click('#digestClose');
 await page.waitForTimeout(200);
 
